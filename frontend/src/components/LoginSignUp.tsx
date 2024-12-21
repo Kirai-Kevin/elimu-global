@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { config } from '../config/env';
 
 function LoginSignUp() {
   const navigate = useNavigate();
@@ -25,10 +26,10 @@ function LoginSignUp() {
     
     // Simulate sending data to recommendation AI
     try {
-      const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+      const response = await fetch(config.apiUrl, {
         method: 'POST',
         headers: {
-          'Authorization': 'Bearer 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',
+          'Authorization': `Bearer ${config.groqApiKey}`,
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
@@ -153,4 +154,3 @@ function LoginSignUp() {
 }
 
 export default LoginSignUp;
-

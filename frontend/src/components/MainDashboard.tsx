@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { config } from '../config/env';
 
 interface Lesson {
   id: number;
@@ -27,10 +28,10 @@ function MainDashboard() {
     // Simulating API call to fetch AI recommendations
     const fetchRecommendations = async () => {
       try {
-        const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+        const response = await fetch(config.apiUrl, {
           method: 'POST',
           headers: {
-            'Authorization': 'Bearer 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',
+            'Authorization': `Bearer ${config.groqApiKey}`,
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
@@ -101,4 +102,3 @@ function MainDashboard() {
 }
 
 export default MainDashboard;
-
