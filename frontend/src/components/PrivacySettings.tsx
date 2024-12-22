@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import PageContainer from './PageContainer';
 
 interface PrivacySetting {
   id: string;
@@ -60,97 +59,197 @@ function PrivacySettings() {
     }
   };
 
+  const itemVariants = {
+    hidden: { opacity: 0, y: 20 },
+    visible: {
+      opacity: 1,
+      y: 0,
+      transition: {
+        type: 'spring',
+        stiffness: 100,
+        damping: 10,
+        delay: 0.2
+      }
+    }
+  };
+
+  const handleSave = () => {
+    // Here you would typically make an API call to save the settings
+    alert('Privacy settings saved!');
+  };
+
+  const handleSettingChange = (setting: string, checked: boolean) => {
+    setSettings(prevSettings =>
+      prevSettings.map(s =>
+        s.id === setting
+          ? { ...s, enabled: checked }
+          : s
+      )
+    );
+  };
+
   return (
-    <PageContainer>
+    <div className="min-h-screen bg-gray-50">
       <motion.div
+        className="container mx-auto px-4 py-8"
         variants={containerVariants}
         initial="hidden"
         animate="visible"
-        className="max-w-2xl mx-auto"
       >
-        <h2 className="text-2xl font-bold text-blue-600 mb-6">Privacy Settings</h2>
-        
-        <div className="bg-white rounded-xl shadow-lg p-6">
-          <div className="space-y-6">
-            {settings.map((setting) => (
-              <div key={setting.id} className="flex items-center justify-between border-b border-gray-200 last:border-0 pb-6 last:pb-0">
-                <div className="flex-grow">
-                  <h3 className="text-lg font-semibold text-blue-800">{setting.title}</h3>
-                  <p className="text-gray-600 text-sm">{setting.description}</p>
-                </div>
-                <div className="ml-4 flex-shrink-0">
-                  <motion.button
-                    type="button"
-                    role="switch"
-                    aria-checked={setting.enabled}
-                    className={`${
-                      setting.enabled ? 'bg-blue-600' : 'bg-gray-200'
-                    } relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2`}
-                    onClick={() => handleToggle(setting.id)}
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                  >
-                    <span
-                      aria-hidden="true"
-                      className={`${
-                        setting.enabled ? 'translate-x-5' : 'translate-x-0'
-                      } pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out`}
-                    />
-                  </motion.button>
-                </div>
-              </div>
-            ))}
+        {/* Header with Illustration */}
+        <div className="flex flex-col md:flex-row items-center justify-between mb-8 bg-white rounded-xl p-6 shadow-lg">
+          <div className="md:w-1/2 mb-6 md:mb-0">
+            <h1 className="text-3xl font-bold text-gray-800 mb-4">Privacy Settings</h1>
+            <p className="text-gray-600">
+              Control your privacy preferences and manage how your information is shared within the platform.
+            </p>
           </div>
-
-          <div className="mt-8 border-t border-gray-200 pt-6">
-            <h3 className="text-lg font-semibold text-blue-800 mb-4">Data Management</h3>
-            <div className="space-y-4">
-              <motion.button
-                type="button"
-                className="w-full px-4 py-2 bg-red-100 text-red-700 rounded-lg hover:bg-red-200 transition-colors text-left"
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-                onClick={() => {
-                  // Here you would typically make an API call to request data deletion
-                  if (window.confirm('Are you sure you want to request your data deletion? This action cannot be undone.')) {
-                    alert('Data deletion request submitted. We will process your request within 30 days.');
-                  }
-                }}
-              >
-                Request Data Deletion
-              </motion.button>
-              <motion.button
-                type="button"
-                className="w-full px-4 py-2 bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 transition-colors text-left"
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-                onClick={() => {
-                  // Here you would typically make an API call to download user data
-                  alert('Your data export request has been received. We will email you when it\'s ready for download.');
-                }}
-              >
-                Download My Data
-              </motion.button>
-            </div>
-          </div>
-
-          <div className="mt-6 flex justify-end">
-            <motion.button
-              type="button"
-              className="px-4 py-2 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-lg hover:from-blue-600 hover:to-blue-700 transition-colors"
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              onClick={() => {
-                // Here you would typically make an API call to save the settings
-                alert('Privacy settings saved!');
-              }}
-            >
-              Save Settings
-            </motion.button>
+          <div className="md:w-1/2 flex justify-center">
+            <img
+              src="/images/privacy-illustration.svg"
+              alt="Privacy Illustration"
+              className="w-full max-w-md h-auto"
+            />
           </div>
         </div>
+
+        {/* Settings Sections */}
+        <div className="grid md:grid-cols-2 gap-6">
+          {/* Profile Visibility */}
+          <motion.div
+            variants={itemVariants}
+            className="bg-white rounded-xl shadow-md p-6"
+          >
+            <h2 className="text-xl font-semibold mb-4 text-gray-800">Profile Visibility</h2>
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="font-medium text-gray-700">Show Online Status</h3>
+                  <p className="text-sm text-gray-500">Let others see when you're active</p>
+                </div>
+                <motion.button
+                  type="button"
+                  role="switch"
+                  aria-checked={settings.find(s => s.id === 'profile-visibility')?.enabled}
+                  className={`${
+                    settings.find(s => s.id === 'profile-visibility')?.enabled ? 'bg-blue-600' : 'bg-gray-200'
+                  } relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2`}
+                  onClick={() => handleToggle('profile-visibility')}
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                >
+                  <span
+                    aria-hidden="true"
+                    className={`${
+                      settings.find(s => s.id === 'profile-visibility')?.enabled ? 'translate-x-5' : 'translate-x-0'
+                    } pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out`}
+                  />
+                </motion.button>
+              </div>
+              
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="font-medium text-gray-700">Profile Searchability</h3>
+                  <p className="text-sm text-gray-500">Allow others to find you by name</p>
+                </div>
+                <motion.button
+                  type="button"
+                  role="switch"
+                  aria-checked={settings.find(s => s.id === 'third-party')?.enabled}
+                  className={`${
+                    settings.find(s => s.id === 'third-party')?.enabled ? 'bg-blue-600' : 'bg-gray-200'
+                  } relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2`}
+                  onClick={() => handleToggle('third-party')}
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                >
+                  <span
+                    aria-hidden="true"
+                    className={`${
+                      settings.find(s => s.id === 'third-party')?.enabled ? 'translate-x-5' : 'translate-x-0'
+                    } pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out`}
+                  />
+                </motion.button>
+              </div>
+            </div>
+          </motion.div>
+
+          {/* Data Sharing */}
+          <motion.div
+            variants={itemVariants}
+            className="bg-white rounded-xl shadow-md p-6"
+          >
+            <h2 className="text-xl font-semibold mb-4 text-gray-800">Data Sharing</h2>
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="font-medium text-gray-700">Learning Progress</h3>
+                  <p className="text-sm text-gray-500">Share your progress with instructors</p>
+                </div>
+                <motion.button
+                  type="button"
+                  role="switch"
+                  aria-checked={settings.find(s => s.id === 'activity-tracking')?.enabled}
+                  className={`${
+                    settings.find(s => s.id === 'activity-tracking')?.enabled ? 'bg-blue-600' : 'bg-gray-200'
+                  } relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2`}
+                  onClick={() => handleToggle('activity-tracking')}
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                >
+                  <span
+                    aria-hidden="true"
+                    className={`${
+                      settings.find(s => s.id === 'activity-tracking')?.enabled ? 'translate-x-5' : 'translate-x-0'
+                    } pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out`}
+                  />
+                </motion.button>
+              </div>
+
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="font-medium text-gray-700">Activity History</h3>
+                  <p className="text-sm text-gray-500">Allow access to your learning history</p>
+                </div>
+                <motion.button
+                  type="button"
+                  role="switch"
+                  aria-checked={settings.find(s => s.id === 'data-collection')?.enabled}
+                  className={`${
+                    settings.find(s => s.id === 'data-collection')?.enabled ? 'bg-blue-600' : 'bg-gray-200'
+                  } relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2`}
+                  onClick={() => handleToggle('data-collection')}
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                >
+                  <span
+                    aria-hidden="true"
+                    className={`${
+                      settings.find(s => s.id === 'data-collection')?.enabled ? 'translate-x-5' : 'translate-x-0'
+                    } pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out`}
+                  />
+                </motion.button>
+              </div>
+            </div>
+          </motion.div>
+        </div>
+
+        {/* Save Button */}
+        <motion.div
+          variants={itemVariants}
+          className="mt-8 flex justify-end"
+        >
+          <motion.button
+            onClick={handleSave}
+            className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+          >
+            Save Changes
+          </motion.button>
+        </motion.div>
       </motion.div>
-    </PageContainer>
+    </div>
   );
 }
 

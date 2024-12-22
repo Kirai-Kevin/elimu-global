@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="800" height="400" viewBox="0 0 800 400" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background Elements -->
+  <path d="M0 300 Q400 350 800 300 L800 400 L0 400 Z" fill="#E3F2FD" opacity="0.3"/>
+  <path d="M0 320 Q400 370 800 320 L800 400 L0 400 Z" fill="#BBDEFB" opacity="0.2"/>
+  
+  <!-- Student Group Silhouettes -->
+  <!-- Student 1 -->
+  <g transform="translate(100, 150)">
+    <circle cx="40" cy="40" r="30" fill="#1976D2"/>
+    <path d="M10 80 Q40 120 70 80 L70 160 L10 160 Z" fill="#1976D2"/>
+    <path d="M30 35 Q40 30 50 35 Q45 45 30 35" fill="white"/>
+  </g>
+  
+  <!-- Student 2 -->
+  <g transform="translate(250, 120)">
+    <circle cx="40" cy="40" r="30" fill="#2196F3"/>
+    <path d="M10 80 Q40 120 70 80 L70 160 L10 160 Z" fill="#2196F3"/>
+    <path d="M30 35 Q40 30 50 35 Q45 45 30 35" fill="white"/>
+  </g>
+  
+  <!-- Student 3 -->
+  <g transform="translate(400, 140)">
+    <circle cx="40" cy="40" r="30" fill="#64B5F6"/>
+    <path d="M10 80 Q40 120 70 80 L70 160 L10 160 Z" fill="#64B5F6"/>
+    <path d="M30 35 Q40 30 50 35 Q45 45 30 35" fill="white"/>
+  </g>
+  
+  <!-- Student 4 -->
+  <g transform="translate(550, 130)">
+    <circle cx="40" cy="40" r="30" fill="#90CAF9"/>
+    <path d="M10 80 Q40 120 70 80 L70 160 L10 160 Z" fill="#90CAF9"/>
+    <path d="M30 35 Q40 30 50 35 Q45 45 30 35" fill="white"/>
+  </g>
+  
+  <!-- Floating Elements -->
+  <circle cx="150" cy="50" r="10" fill="#2196F3" opacity="0.6"/>
+  <circle cx="650" cy="80" r="15" fill="#1976D2" opacity="0.6"/>
+  <circle cx="350" cy="60" r="12" fill="#64B5F6" opacity="0.6"/>
+  <circle cx="450" cy="40" r="8" fill="#90CAF9" opacity="0.6"/>
+  
+  <!-- Connection Lines -->
+  <path d="M180 200 Q400 150 620 200" stroke="#2196F3" stroke-width="2" stroke-dasharray="5,5"/>
+  <path d="M150 250 Q400 300 650 250" stroke="#1976D2" stroke-width="2" stroke-dasharray="5,5"/>
+</svg>
