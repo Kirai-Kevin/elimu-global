@@ -26,6 +26,10 @@ function AllStudentsDashboard() {
   ];
 
   const handleStartLearning = () => {
+    // Store selected plan in localStorage if not already selected
+    if (!localStorage.getItem('selectedPlan')) {
+      localStorage.setItem('selectedPlan', 'Basic Plan'); // Default to Basic Plan if none selected
+    }
     // Navigate to the main dashboard
     navigate('/dashboard');
   };

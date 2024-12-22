@@ -24,8 +24,22 @@ function LoginSignUp() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
+    // Generate a simple token (in a real app, this would come from your backend)
+    const token = btoa(formData.email + ':' + new Date().getTime());
+    
+    // Store auth token
+    localStorage.setItem('userToken', token);
+    
     // Store user data in localStorage
-    localStorage.setItem('user', JSON.stringify(formData));
+    localStorage.setItem('user', JSON.stringify({
+      ...formData,
+      // Add token and expiry
+      token: token,
+      expiryTime: new Date(Date.now() + 24 * 60 * 60 * 1000) // 24 hours from now
+    }));
+    
+    // Clear any previously selected plan
+    localStorage.removeItem('selectedPlan');
     
     // Simulate sending data to recommendation AI
     try {
@@ -50,23 +64,17 @@ function LoginSignUp() {
         }),
       });
 
-      if (!response.ok) {
-        throw new Error('Failed to get AI recommendations');
-      }
-
       const data = await response.json();
-      localStorage.setItem('recommendations', data.choices[0].message.content);
+      
+      // Store the AI recommendations
+      localStorage.setItem('recommendations', JSON.stringify(data));
+      
+      // Navigate to plan selection
+      navigate('/all-students');
+      
     } catch (error) {
-      console.error('Error getting AI recommendations:', error);
-    }
-
-    // Check if there's a redirect URL saved
-    const redirectUrl = sessionStorage.getItem('redirectUrl');
-    if (redirectUrl) {
-      sessionStorage.removeItem('redirectUrl'); // Clear the saved URL
-      navigate(redirectUrl); // Navigate to the saved URL
-    } else {
-      // Default navigation to all-students
+      console.error('Error:', error);
+      // Still navigate even if AI recommendation fails
       navigate('/all-students');
     }
   };

@@ -20,9 +20,13 @@ import LanguagePreferences from './components/LanguagePreferences';
 import Schedule from './components/Schedule';
 import Resources from './components/Resources';
 
-// Simple auth check
+// Auth checks
 const isAuthenticated = () => {
-  return localStorage.getItem('user') !== null;
+  return localStorage.getItem('userToken') !== null;
+};
+
+const hasSelectedPlan = () => {
+  return localStorage.getItem('selectedPlan') !== null;
 };
 
 // Protected Route wrapper component
@@ -30,9 +34,14 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const location = useLocation();
 
   if (!isAuthenticated()) {
-    // Save the attempted URL
+    // Redirect to signup if not authenticated
     sessionStorage.setItem('redirectUrl', location.pathname);
     return <Navigate to="/login" replace />;
+  }
+
+  // If authenticated but no plan selected, and trying to access dashboard
+  if (!hasSelectedPlan() && location.pathname.startsWith('/dashboard')) {
+    return <Navigate to="/all-students" replace />;
   }
 
   return <>{children}</>;
@@ -41,11 +50,12 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
 // Auth Route wrapper component (for login/signup)
 const AuthRoute = ({ children }: { children: React.ReactNode }) => {
   if (isAuthenticated()) {
-    const redirectUrl = sessionStorage.getItem('redirectUrl');
-    if (redirectUrl) {
-      sessionStorage.removeItem('redirectUrl');
-      return <Navigate to={redirectUrl} replace />;
+    // If authenticated but no plan selected
+    if (!hasSelectedPlan()) {
+      return <Navigate to="/all-students" replace />;
     }
+    
+    // If has plan, go to dashboard
     return <Navigate to="/dashboard" replace />;
   }
   return <>{children}</>;
@@ -66,7 +76,7 @@ function App() {
           } 
         />
         
-        {/* Protected Routes */}
+        {/* Plan Selection Route */}
         <Route 
           path="/all-students" 
           element={
@@ -76,7 +86,7 @@ function App() {
           } 
         />
 
-        {/* Main Dashboard and nested routes */}
+        {/* Main Dashboard and nested routes - requires both auth and plan selection */}
         <Route 
           path="/dashboard"
           element={
@@ -98,15 +108,13 @@ function App() {
           <Route path="library" element={<Library />} />
           <Route path="progress" element={<Progress />} />
           <Route path="more" element={<MoreOptions />} />
-          
-          {/* More Options sub-routes */}
-          <Route path="more/account" element={<AccountSettings />} />
-          <Route path="more/notifications" element={<NotificationPreferences />} />
-          <Route path="more/privacy" element={<PrivacySettings />} />
-          <Route path="more/language" element={<LanguagePreferences />} />
+          <Route path="account-settings" element={<AccountSettings />} />
+          <Route path="notification-preferences" element={<NotificationPreferences />} />
+          <Route path="privacy-settings" element={<PrivacySettings />} />
+          <Route path="language-preferences" element={<LanguagePreferences />} />
         </Route>
 
-        {/* Catch all route */}
+        {/* Catch all route - redirect to login */}
         <Route path="*" element={<Navigate to="/login" replace />} />
       </Routes>
     </Router>
