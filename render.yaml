@@ -3,6 +3,7 @@ services:
   - type: web
     name: elimu-global-frontend
     env: node
+    nodeVersion: 18.x
     rootDir: frontend
     buildCommand: |
       npm install --legacy-peer-deps
@@ -28,6 +29,7 @@ services:
   - type: web
     name: elimu-global-api
     env: node
+    nodeVersion: 18.x
     region: frankfurt
     buildCommand: cd backend && npm install && npm run build
     startCommand: cd backend && npm run start:prod
