@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
-import { Link, Outlet, useLocation } from 'react-router-dom';
+import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { HomeIcon, UserIcon, AwardIcon, VideoIcon, BookOpenIcon, CalendarIcon, FolderIcon, LibraryIcon, BarChartIcon, MoreHorizontalIcon, MenuIcon, XIcon } from 'lucide-react';
+import { HomeIcon, UserIcon, AwardIcon, VideoIcon, BookOpenIcon, CalendarIcon, FolderIcon, LibraryIcon, BarChartIcon, MoreHorizontalIcon, MenuIcon, XIcon, LogOut } from 'lucide-react';
 import ChatBot from './ChatBot';
 
 const sidebarItems = [
@@ -22,6 +22,7 @@ function Layout() {
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
   const location = useLocation();
+  const navigate = useNavigate();
 
   useEffect(() => {
     const handleResize = () => {
@@ -44,6 +45,13 @@ function Layout() {
   const sidebarVariants = {
     open: { x: 0, display: 'block' },
     closed: { x: isMobile ? '-100%' : 0, display: isMobile ? 'none' : 'block' },
+  };
+
+  const handleLogout = () => {
+    // Clear user data from localStorage
+    localStorage.clear();
+    // Redirect to login page
+    navigate('/login');
   };
 
   return (
@@ -100,6 +108,13 @@ function Layout() {
                 </Link>
               );
             })}
+            <button
+              onClick={handleLogout}
+              className="flex items-center w-full px-4 py-3 text-red-600 hover:bg-red-50 transition-colors"
+            >
+              <LogOut className="w-5 h-5 mr-3" />
+              <span>Logout</span>
+            </button>
           </nav>
         </div>
       </motion.aside>
