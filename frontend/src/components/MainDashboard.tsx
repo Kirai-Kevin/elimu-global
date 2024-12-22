@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { config } from '../config/env';
+import PageContainer from './PageContainer';
 
 interface Lesson {
   id: number;
@@ -16,7 +17,6 @@ function MainDashboard() {
   useEffect(() => {
     // Simulating API call to fetch lessons
     const fetchLessons = async () => {
-      // In a real application, this would be an API call
       const mockLessons: Lesson[] = [
         { id: 1, title: 'Introduction to Algebra', progress: 75, timeSpent: 120, grade: 85 },
         { id: 2, title: 'World History: Ancient Civilizations', progress: 50, timeSpent: 90, grade: null },
@@ -66,38 +66,60 @@ function MainDashboard() {
   }, []);
 
   return (
-    <div>
-      <h2 className="text-2xl font-semibold mb-6">Your Learning Progress</h2>
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-        {lessons.map((lesson) => (
-          <div key={lesson.id} className="bg-white rounded-lg shadow-md p-6">
-            <h3 className="text-lg font-semibold mb-4">{lesson.title}</h3>
-            <div className="mb-4">
-              <div className="text-sm font-medium text-gray-500 mb-1">Progress</div>
-              <div className="w-full bg-gray-200 rounded-full h-2.5">
-                <div
-                  className="bg-blue-600 h-2.5 rounded-full"
-                  style={{ width: `${lesson.progress}%` }}
-                ></div>
+    <PageContainer>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 h-full">
+        {/* Recent Lessons */}
+        <div className="bg-white rounded-lg shadow-sm p-6 border border-gray-100">
+          <h2 className="text-xl font-semibold text-gray-800 mb-4">Recent Lessons</h2>
+          <div className="space-y-4">
+            {lessons.map((lesson) => (
+              <div key={lesson.id} className="p-4 bg-gray-50 rounded-lg">
+                <h3 className="font-medium text-gray-800">{lesson.title}</h3>
+                <div className="mt-2 flex items-center">
+                  <div className="flex-1 bg-gray-200 rounded-full h-2">
+                    <div
+                      className="bg-blue-600 h-2 rounded-full"
+                      style={{ width: `${lesson.progress}%` }}
+                    />
+                  </div>
+                  <span className="ml-2 text-sm text-gray-600">{lesson.progress}%</span>
+                </div>
+                <div className="mt-2 text-sm text-gray-600">
+                  Time spent: {lesson.timeSpent} minutes
+                </div>
+                {lesson.grade && (
+                  <div className="mt-1 text-sm text-green-600">
+                    Grade: {lesson.grade}%
+                  </div>
+                )}
               </div>
-            </div>
-            <div className="flex justify-between text-sm">
-              <span>Time Spent: {lesson.timeSpent} min</span>
-              <span>Grade: {lesson.grade ? `${lesson.grade}%` : 'N/A'}</span>
-            </div>
+            ))}
           </div>
-        ))}
-      </div>
+        </div>
 
-      <h2 className="text-2xl font-semibold my-6">AI Recommendations</h2>
-      <div className="bg-white rounded-lg shadow-md p-6">
-        <ul className="list-disc list-inside">
-          {recommendations.map((rec, index) => (
-            <li key={index} className="mb-2">{rec}</li>
-          ))}
-        </ul>
+        {/* Progress Overview */}
+        <div className="bg-white rounded-lg shadow-sm p-6 border border-gray-100">
+          <h2 className="text-xl font-semibold text-gray-800 mb-4">Progress Overview</h2>
+          {/* Add your progress charts/stats here */}
+        </div>
+
+        {/* Upcoming Classes */}
+        <div className="bg-white rounded-lg shadow-sm p-6 border border-gray-100">
+          <h2 className="text-xl font-semibold text-gray-800 mb-4">Upcoming Classes</h2>
+          {/* Add your upcoming classes list here */}
+        </div>
+
+        {/* AI Recommendations */}
+        <div className="bg-white rounded-lg shadow-sm p-6 border border-gray-100">
+          <h2 className="text-xl font-semibold text-gray-800 mb-4">AI Recommendations</h2>
+          <ul className="list-disc list-inside">
+            {recommendations.map((rec, index) => (
+              <li key={index} className="mb-2">{rec}</li>
+            ))}
+          </ul>
+        </div>
       </div>
-    </div>
+    </PageContainer>
   );
 }
 
