@@ -1,101 +1,238 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { motion } from 'framer-motion';
-import PageContainer from './PageContainer';
+import { Clock, CheckCircle, AlertCircle, Calendar } from 'react-feather';
 
 interface Assignment {
-  id: number;
+  id: string;
   title: string;
   subject: string;
   dueDate: string;
-  status: 'Not Started' | 'In Progress' | 'Submitted';
+  status: 'pending' | 'completed' | 'overdue';
+  description: string;
+  progress: number;
 }
 
 function Assignments() {
-  const [assignments, setAssignments] = useState<Assignment[]>([]);
-
-  useEffect(() => {
-    // Simulating API call to fetch assignments
-    const fetchAssignments = async () => {
-      // In a real application, this would be an API call
-      const mockAssignments: Assignment[] = [
-        { id: 1, title: 'Algebra Problem Set', subject: 'Math', dueDate: '2023-06-20', status: 'Not Started' },
-        { id: 2, title: 'Essay on Shakespeare', subject: 'English', dueDate: '2023-06-22', status: 'In Progress' },
-        { id: 3, title: 'Lab Report: Photosynthesis', subject: 'Biology', dueDate: '2023-06-25', status: 'Submitted' },
-      ];
-      setAssignments(mockAssignments);
-    };
-
-    fetchAssignments();
-  }, []);
-
-  const getStatusColor = (status: Assignment['status']) => {
-    switch (status) {
-      case 'Not Started':
-        return 'bg-red-100 text-red-800';
-      case 'In Progress':
-        return 'bg-yellow-100 text-yellow-800';
-      case 'Submitted':
-        return 'bg-green-100 text-green-800';
-    }
-  };
+  const [selectedStatus, setSelectedStatus] = useState<string>('all');
+  const [assignments] = useState<Assignment[]>([
+    {
+      id: '1',
+      title: 'Mathematics Problem Set',
+      subject: 'Mathematics',
+      dueDate: '2024-01-05',
+      status: 'pending',
+      description: 'Complete problems 1-20 from Chapter 3',
+      progress: 60,
+    },
+    {
+      id: '2',
+      title: 'Physics Lab Report',
+      subject: 'Physics',
+      dueDate: '2024-01-03',
+      status: 'completed',
+      description: 'Write a detailed report on the pendulum experiment',
+      progress: 100,
+    },
+    {
+      id: '3',
+      title: 'Chemistry Quiz',
+      subject: 'Chemistry',
+      dueDate: '2023-12-20',
+      status: 'overdue',
+      description: 'Online quiz covering organic chemistry basics',
+      progress: 0,
+    },
+  ]);
 
   const containerVariants = {
     hidden: { opacity: 0 },
     visible: {
       opacity: 1,
       transition: {
-        staggerChildren: 0.1
-      }
-    }
+        staggerChildren: 0.1,
+      },
+    },
   };
 
   const itemVariants = {
-    hidden: { y: 20, opacity: 0 },
+    hidden: { opacity: 0, y: 20 },
     visible: {
-      y: 0,
       opacity: 1,
+      y: 0,
       transition: {
         type: 'spring',
-        stiffness: 100
-      }
+        stiffness: 100,
+        damping: 10,
+      },
+    },
+  };
+
+  const getStatusColor = (status: Assignment['status']) => {
+    switch (status) {
+      case 'completed':
+        return 'text-green-600 bg-green-100';
+      case 'overdue':
+        return 'text-red-600 bg-red-100';
+      default:
+        return 'text-yellow-600 bg-yellow-100';
     }
   };
 
+  const getStatusIcon = (status: Assignment['status']) => {
+    switch (status) {
+      case 'completed':
+        return <CheckCircle className="w-5 h-5" />;
+      case 'overdue':
+        return <AlertCircle className="w-5 h-5" />;
+      default:
+        return <Clock className="w-5 h-5" />;
+    }
+  };
+
+  const filteredAssignments = assignments.filter(
+    (assignment) => selectedStatus === 'all' || assignment.status === selectedStatus
+  );
+
   return (
-    <PageContainer>
+    <div className="min-h-screen bg-gray-50">
       <motion.div
+        className="container mx-auto px-4 py-8"
         variants={containerVariants}
         initial="hidden"
         animate="visible"
       >
-        <h2 className="text-2xl font-semibold mb-6 text-blue-600">Your Assignments</h2>
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-          {assignments.map((assignment) => (
-            <motion.div key={assignment.id} variants={itemVariants}>
-              <div className="bg-white rounded-lg shadow-md p-6">
-                <h3 className="text-lg font-semibold mb-2 text-blue-800">{assignment.title}</h3>
-                <p className="text-sm text-gray-600 mb-2">Subject: {assignment.subject}</p>
-                <p className="text-sm text-gray-600 mb-2">Due Date: {assignment.dueDate}</p>
-                <div className={`inline-block px-2 py-1 rounded-full text-xs font-semibold ${getStatusColor(assignment.status)}`}>
-                  {assignment.status}
+        {/* Header with Illustration */}
+        <div className="flex flex-col md:flex-row items-center justify-between mb-8 bg-white rounded-xl p-6 shadow-lg">
+          <div className="md:w-1/2 mb-6 md:mb-0">
+            <h1 className="text-3xl font-bold text-gray-800 mb-4">Assignments</h1>
+            <p className="text-gray-600">
+              Track and manage your assignments, submissions, and deadlines.
+            </p>
+          </div>
+          <div className="md:w-1/2 flex justify-center">
+            <img
+              src="/images/assignments-illustration.svg"
+              alt="Assignments Illustration"
+              className="w-full max-w-md h-auto"
+            />
+          </div>
+        </div>
+
+        {/* Status Filters */}
+        <motion.div
+          variants={itemVariants}
+          className="bg-white rounded-xl shadow-md p-6 mb-6"
+        >
+          <div className="flex flex-wrap gap-4">
+            <button
+              onClick={() => setSelectedStatus('all')}
+              className={`px-4 py-2 rounded-lg ${
+                selectedStatus === 'all'
+                  ? 'bg-blue-600 text-white'
+                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+              }`}
+            >
+              All
+            </button>
+            <button
+              onClick={() => setSelectedStatus('pending')}
+              className={`px-4 py-2 rounded-lg ${
+                selectedStatus === 'pending'
+                  ? 'bg-yellow-600 text-white'
+                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+              }`}
+            >
+              Pending
+            </button>
+            <button
+              onClick={() => setSelectedStatus('completed')}
+              className={`px-4 py-2 rounded-lg ${
+                selectedStatus === 'completed'
+                  ? 'bg-green-600 text-white'
+                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+              }`}
+            >
+              Completed
+            </button>
+            <button
+              onClick={() => setSelectedStatus('overdue')}
+              className={`px-4 py-2 rounded-lg ${
+                selectedStatus === 'overdue'
+                  ? 'bg-red-600 text-white'
+                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+              }`}
+            >
+              Overdue
+            </button>
+          </div>
+        </motion.div>
+
+        {/* Assignments List */}
+        <div className="space-y-4">
+          {filteredAssignments.map((assignment) => (
+            <motion.div
+              key={assignment.id}
+              variants={itemVariants}
+              className="bg-white rounded-xl shadow-md p-6 hover:shadow-lg transition-shadow"
+            >
+              <div className="flex items-start justify-between mb-4">
+                <div>
+                  <h3 className="text-lg font-medium text-gray-900">{assignment.title}</h3>
+                  <p className="text-sm text-gray-500">{assignment.subject}</p>
                 </div>
-                {assignment.status !== 'Submitted' && (
-                  <motion.button 
-                    className="mt-4 bg-blue-500 text-white py-2 px-4 rounded hover:bg-blue-600 transition-colors"
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                  >
-                    {assignment.status === 'Not Started' ? 'Start Assignment' : 'Continue Assignment'}
-                  </motion.button>
-                )}
+                <div className={`px-3 py-1 rounded-full flex items-center space-x-1 ${getStatusColor(assignment.status)}`}>
+                  {getStatusIcon(assignment.status)}
+                  <span className="ml-1 text-sm capitalize">{assignment.status}</span>
+                </div>
+              </div>
+              <p className="text-gray-600 mb-4">{assignment.description}</p>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center text-sm text-gray-500">
+                  <Calendar className="w-4 h-4 mr-1" />
+                  Due: {new Date(assignment.dueDate).toLocaleDateString()}
+                </div>
+                <div className="w-48">
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="text-sm text-gray-500">Progress</span>
+                    <span className="text-sm font-medium text-gray-700">{assignment.progress}%</span>
+                  </div>
+                  <div className="w-full bg-gray-200 rounded-full h-2">
+                    <motion.div
+                      initial={{ width: 0 }}
+                      animate={{ width: `${assignment.progress}%` }}
+                      className={`h-2 rounded-full ${
+                        assignment.status === 'completed'
+                          ? 'bg-green-500'
+                          : assignment.status === 'overdue'
+                          ? 'bg-red-500'
+                          : 'bg-blue-500'
+                      }`}
+                    />
+                  </div>
+                </div>
               </div>
             </motion.div>
           ))}
         </div>
+
+        {/* Empty State */}
+        {filteredAssignments.length === 0 && (
+          <motion.div
+            variants={itemVariants}
+            className="text-center py-12"
+          >
+            <CheckCircle className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+            <h3 className="text-lg font-medium text-gray-900">No assignments found</h3>
+            <p className="text-gray-500">
+              {selectedStatus === 'all'
+                ? 'You have no assignments at the moment'
+                : `You have no ${selectedStatus} assignments`}
+            </p>
+          </motion.div>
+        )}
       </motion.div>
-    </PageContainer>
+    </div>
   );
 }
 
 export default Assignments;
-

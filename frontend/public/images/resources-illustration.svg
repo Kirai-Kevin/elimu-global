@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="800" height="400" viewBox="0 0 800 400" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background Elements -->
+  <path d="M0 300 Q400 350 800 300 L800 400 L0 400 Z" fill="#E3F2FD" opacity="0.3"/>
+  <path d="M0 320 Q400 370 800 320 L800 400 L0 400 Z" fill="#BBDEFB" opacity="0.2"/>
+  
+  <!-- Books Stack -->
+  <g transform="translate(350,150)">
+    <!-- Book 1 -->
+    <g transform="rotate(-10)">
+      <rect x="-60" y="-15" width="120" height="30" rx="5" fill="#2196F3"/>
+      <rect x="-55" y="-15" width="10" height="30" fill="#1976D2"/>
+    </g>
+    <!-- Book 2 -->
+    <g transform="rotate(5)">
+      <rect x="-60" y="-45" width="120" height="30" rx="5" fill="#64B5F6"/>
+      <rect x="-55" y="-45" width="10" height="30" fill="#2196F3"/>
+    </g>
+    <!-- Book 3 -->
+    <g transform="rotate(-5)">
+      <rect x="-60" y="-75" width="120" height="30" rx="5" fill="#90CAF9"/>
+      <rect x="-55" y="-75" width="10" height="30" fill="#64B5F6"/>
+    </g>
+  </g>
+  
+  <!-- Resource Icons -->
+  <g transform="translate(200,150)">
+    <!-- Document Icon -->
+    <rect x="-30" y="-40" width="60" height="80" rx="5" fill="#1976D2"/>
+    <rect x="-20" y="-30" width="40" height="10" rx="2" fill="white" opacity="0.6"/>
+    <rect x="-20" y="-15" width="40" height="10" rx="2" fill="white" opacity="0.6"/>
+    <rect x="-20" y="0" width="40" height="10" rx="2" fill="white" opacity="0.6"/>
+  </g>
+  
+  <g transform="translate(600,150)">
+    <!-- Video Icon -->
+    <rect x="-40" y="-30" width="80" height="60" rx="5" fill="#2196F3"/>
+    <polygon points="-10,-15 20,0 -10,15" fill="white"/>
+  </g>
+  
+  <!-- Floating Elements -->
+  <g transform="translate(250,50)">
+    <circle cx="0" cy="0" r="20" fill="#64B5F6" opacity="0.6">
+      <animate attributeName="cy" values="0;10;0" dur="2s" repeatCount="indefinite"/>
+    </circle>
+  </g>
+  
+  <g transform="translate(550,50)">
+    <circle cx="0" cy="0" r="20" fill="#1976D2" opacity="0.6">
+      <animate attributeName="cy" values="0;-10;0" dur="2s" repeatCount="indefinite"/>
+    </circle>
+  </g>
+  
+  <!-- Connection Lines -->
+  <path d="M200 150 Q400 100 600 150" stroke="#2196F3" stroke-width="2" stroke-dasharray="5,5"/>
+  <path d="M250 50 Q400 0 550 50" stroke="#1976D2" stroke-width="2" stroke-dasharray="5,5"/>
+  
+  <!-- Decorative Dots -->
+  <g transform="translate(150,250)">
+    <circle cx="0" cy="0" r="5" fill="#2196F3" opacity="0.6"/>
+    <circle cx="20" cy="0" r="5" fill="#1976D2" opacity="0.6"/>
+    <circle cx="40" cy="0" r="5" fill="#2196F3" opacity="0.6"/>
+  </g>
+  
+  <g transform="translate(650,250)">
+    <circle cx="0" cy="0" r="5" fill="#1976D2" opacity="0.6"/>
+    <circle cx="-20" cy="0" r="5" fill="#2196F3" opacity="0.6"/>
+    <circle cx="-40" cy="0" r="5" fill="#1976D2" opacity="0.6"/>
+  </g>
+</svg>
