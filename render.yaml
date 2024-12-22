@@ -2,23 +2,21 @@ services:
   # Frontend Service
   - type: web
     name: elimu-global-frontend
-    env: static
-    buildCommand: cd frontend && npm install && npm run build
-    staticPublishPath: ./frontend/dist
-    pullRequestPreviewsEnabled: true
+    env: node
+    rootDir: frontend
+    buildCommand: npm install && npm run build
+    startCommand: npm start
     envVars:
+      - key: NODE_ENV
+        value: production
       - key: VITE_GROQ_API_KEY
         sync: false
-      - key: VITE_API_URL
-        value: https://elimu-global-api.onrender.com
+      - key: PORT
+        value: 10000
     headers:
       - path: /*
         name: Cache-Control
         value: no-cache
-    routes:
-      - type: rewrite
-        source: /*
-        destination: /index.html
 
   # Backend Service
   - type: web
