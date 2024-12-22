@@ -22,10 +22,16 @@ function App() {
   return (
     <Router>
       <Routes>
+        {/* Public Routes */}
         <Route path="/login" element={<LoginSignUp />} />
         <Route path="/all-students" element={<AllStudentsDashboard />} />
+
+        {/* Protected Routes */}
         <Route path="/" element={<Layout />}>
+          {/* Main Dashboard */}
           <Route index element={<MainDashboard />} />
+          
+          {/* Core Features */}
           <Route path="select-instructor" element={<SelectInstructor />} />
           <Route path="achievements" element={<Achievements />} />
           <Route path="classes" element={<Classes />} />
@@ -35,11 +41,13 @@ function App() {
           <Route path="materials" element={<Materials />} />
           <Route path="library" element={<Library />} />
           <Route path="progress" element={<Progress />} />
+          
+          {/* More Options and Settings */}
           <Route path="more" element={<MoreOptions />} />
-          <Route path="account-settings" element={<AccountSettings />} />
-          <Route path="notification-preferences" element={<NotificationPreferences />} />
-          <Route path="privacy-settings" element={<PrivacySettings />} />
-          <Route path="language-preferences" element={<LanguagePreferences />} />
+          <Route path="more/account" element={<AccountSettings />} />
+          <Route path="more/notifications" element={<NotificationPreferences />} />
+          <Route path="more/privacy" element={<PrivacySettings />} />
+          <Route path="more/language" element={<LanguagePreferences />} />
         </Route>
       </Routes>
     </Router>
