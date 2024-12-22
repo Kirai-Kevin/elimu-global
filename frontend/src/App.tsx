@@ -18,7 +18,7 @@ import NotificationPreferences from './components/NotificationPreferences';
 import PrivacySettings from './components/PrivacySettings';
 import LanguagePreferences from './components/LanguagePreferences';
 
-// Simple auth check - replace with your actual auth logic
+// Simple auth check
 const isAuthenticated = () => {
   return localStorage.getItem('user') !== null;
 };
@@ -39,7 +39,11 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
 // Auth Route wrapper component (for login/signup)
 const AuthRoute = ({ children }: { children: React.ReactNode }) => {
   if (isAuthenticated()) {
-    // If user is already authenticated, redirect to dashboard
+    const redirectUrl = sessionStorage.getItem('redirectUrl');
+    if (redirectUrl) {
+      sessionStorage.removeItem('redirectUrl');
+      return <Navigate to={redirectUrl} replace />;
+    }
     return <Navigate to="/dashboard" replace />;
   }
   return <>{children}</>;
@@ -49,7 +53,7 @@ function App() {
   return (
     <Router>
       <Routes>
-        {/* Public Routes - Login is the default route */}
+        {/* Public Routes */}
         <Route path="/" element={<Navigate to="/login" replace />} />
         <Route 
           path="/login" 
@@ -60,7 +64,7 @@ function App() {
           } 
         />
         
-        {/* All Students Dashboard - requires authentication */}
+        {/* Protected Routes */}
         <Route 
           path="/all-students" 
           element={
@@ -70,9 +74,9 @@ function App() {
           } 
         />
 
-        {/* Main Dashboard and other protected routes */}
+        {/* Main Dashboard and nested routes */}
         <Route 
-          path="/dashboard" 
+          path="/dashboard"
           element={
             <ProtectedRoute>
               <Layout />
@@ -90,13 +94,15 @@ function App() {
           <Route path="library" element={<Library />} />
           <Route path="progress" element={<Progress />} />
           <Route path="more" element={<MoreOptions />} />
+          
+          {/* More Options sub-routes */}
           <Route path="more/account" element={<AccountSettings />} />
           <Route path="more/notifications" element={<NotificationPreferences />} />
           <Route path="more/privacy" element={<PrivacySettings />} />
           <Route path="more/language" element={<LanguagePreferences />} />
         </Route>
 
-        {/* Catch all route - redirect to login */}
+        {/* Catch all route */}
         <Route path="*" element={<Navigate to="/login" replace />} />
       </Routes>
     </Router>

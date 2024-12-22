@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import PageContainer from './PageContainer';
 import { Link } from 'react-router-dom';
-import { Settings, Bell, Lock, Globe, HelpCircle, MessageSquare } from 'lucide-react';
+import { Settings, Bell, Lock, Globe, User, LogOut, HelpCircle, MessageSquare } from 'lucide-react';
+import PageContainer from './PageContainer';
 
 function MoreOptions() {
   const [showChatbot, setShowChatbot] = useState(false);
@@ -15,27 +15,27 @@ function MoreOptions() {
   const settingsLinks = [
     { 
       name: "Account Settings", 
-      path: "/more/account", 
-      icon: Settings,
-      description: "Manage your profile, curriculum, and learning preferences"
+      path: "/dashboard/more/account", 
+      icon: User,
+      description: "Manage your account details and preferences"
     },
     { 
       name: "Notification Preferences", 
-      path: "/more/notifications", 
+      path: "/dashboard/more/notifications", 
       icon: Bell,
-      description: "Control your email, push, and SMS notifications"
+      description: "Control your notification settings"
     },
     { 
       name: "Privacy Settings", 
-      path: "/more/privacy", 
+      path: "/dashboard/more/privacy", 
       icon: Lock,
-      description: "Manage your data and privacy preferences"
+      description: "Manage your privacy and security settings"
     },
     { 
       name: "Language Preferences", 
-      path: "/more/language", 
+      path: "/dashboard/more/language", 
       icon: Globe,
-      description: "Set your preferred language and content preferences"
+      description: "Change your language settings"
     },
   ];
 
@@ -59,13 +59,20 @@ function MoreOptions() {
     }
   };
 
+  const handleLogout = () => {
+    // Clear user data from localStorage
+    localStorage.clear();
+    // Redirect to login page
+    window.location.href = '/login';
+  };
+
   return (
     <PageContainer>
       <motion.div
+        className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8"
         variants={containerVariants}
         initial="hidden"
         animate="visible"
-        className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8"
       >
         <h2 className="text-3xl font-bold text-blue-600 mb-8">More Options</h2>
 
@@ -149,6 +156,17 @@ function MoreOptions() {
             ))}
           </div>
         </motion.div>
+
+        <motion.button
+          variants={itemVariants}
+          whileHover={{ scale: 1.02 }}
+          whileTap={{ scale: 0.98 }}
+          onClick={handleLogout}
+          className="mt-8 w-full p-6 bg-red-50 rounded-2xl border border-red-100 hover:shadow-lg transition-all duration-300 flex items-center justify-center text-red-600"
+        >
+          <LogOut className="w-6 h-6 mr-2" />
+          <span className="text-lg font-semibold">Log Out</span>
+        </motion.button>
       </motion.div>
     </PageContainer>
   );
