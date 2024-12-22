@@ -19,6 +19,7 @@
     "@vitejs/plugin-react": "^4.0.0",
     "autoprefixer": "^10.4.16",
     "axios": "^1.7.9",
+    "date-fns": "^4.1.0",
     "framer-motion": "^10.18.0",
     "lucide-react": "^0.469.0",
     "moment": "^2.30.1",

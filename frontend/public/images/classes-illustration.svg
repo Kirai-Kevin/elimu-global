@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="800" height="600" viewBox="0 0 800 600" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <!-- Background Elements -->
+    <circle cx="400" cy="300" r="250" fill="#E3F2FD" opacity="0.5"/>
+    <circle cx="400" cy="300" r="200" fill="#BBDEFB" opacity="0.3"/>
+    
+    <!-- Virtual Classroom Screen -->
+    <g transform="translate(250, 100)">
+        <!-- Screen Frame -->
+        <rect x="0" y="0" width="300" height="200" rx="10" fill="#FFFFFF" stroke="#2196F3" stroke-width="4"/>
+        <rect x="20" y="20" width="260" height="160" rx="5" fill="#E3F2FD"/>
+        
+        <!-- Video Participants -->
+        <rect x="30" y="30" width="80" height="60" rx="5" fill="#90CAF9"/>
+        <circle cx="70" cy="50" r="15" fill="#1976D2"/>
+        <rect x="45" y="70" width="50" height="8" fill="#1976D2"/>
+        
+        <rect x="120" y="30" width="80" height="60" rx="5" fill="#90CAF9"/>
+        <circle cx="160" cy="50" r="15" fill="#1976D2"/>
+        <rect x="135" y="70" width="50" height="8" fill="#1976D2"/>
+        
+        <rect x="210" y="30" width="80" height="60" rx="5" fill="#90CAF9"/>
+        <circle cx="250" cy="50" r="15" fill="#1976D2"/>
+        <rect x="225" y="70" width="50" height="8" fill="#1976D2"/>
+        
+        <!-- Chat Section -->
+        <rect x="30" y="100" width="260" height="70" rx="5" fill="#FFFFFF"/>
+        <rect x="40" y="110" width="180" height="10" rx="2" fill="#E3F2FD"/>
+        <rect x="40" y="130" width="140" height="10" rx="2" fill="#E3F2FD"/>
+        <rect x="40" y="150" width="200" height="10" rx="2" fill="#E3F2FD"/>
+    </g>
+    
+    <!-- Learning Tools -->
+    <g transform="translate(100, 350)">
+        <!-- Book -->
+        <path d="M20 0 L120 0 L120 100 L20 100 C10 100 0 90 0 80 L0 20 C0 10 10 0 20 0" fill="#1976D2"/>
+        <rect x="30" y="20" width="70" height="10" fill="#FFFFFF"/>
+        <rect x="30" y="40" width="50" height="10" fill="#FFFFFF"/>
+        
+        <!-- Calculator -->
+        <rect x="140" y="0" width="80" height="100" rx="10" fill="#2196F3"/>
+        <rect x="150" y="10" width="60" height="20" rx="5" fill="#FFFFFF"/>
+        <g transform="translate(150, 40)">
+            <rect x="0" y="0" width="15" height="15" rx="2" fill="#FFFFFF"/>
+            <rect x="20" y="0" width="15" height="15" rx="2" fill="#FFFFFF"/>
+            <rect x="40" y="0" width="15" height="15" rx="2" fill="#FFFFFF"/>
+            <rect x="0" y="20" width="15" height="15" rx="2" fill="#FFFFFF"/>
+            <rect x="20" y="20" width="15" height="15" rx="2" fill="#FFFFFF"/>
+            <rect x="40" y="20" width="15" height="15" rx="2" fill="#FFFFFF"/>
+        </g>
+    </g>
+    
+    <!-- Floating Elements -->
+    <g>
+        <!-- Math Symbols -->
+        <text x="600" y="150" font-size="40" fill="#1976D2">∑</text>
+        <text x="650" y="200" font-size="40" fill="#1976D2">π</text>
+        <text x="700" y="150" font-size="40" fill="#1976D2">∫</text>
+        
+        <!-- Science Symbols -->
+        <circle cx="620" cy="300" r="20" fill="none" stroke="#2196F3" stroke-width="2"/>
+        <circle cx="620" cy="300" r="10" fill="none" stroke="#2196F3" stroke-width="2"/>
+        <circle cx="620" cy="300" r="3" fill="#2196F3"/>
+        
+        <!-- Language Elements -->
+        <text x="680" y="350" font-size="30" fill="#1976D2">Aa</text>
+        <text x="650" y="400" font-size="30" fill="#1976D2">文</text>
+    </g>
+    
+    <!-- Decorative Elements -->
+    <g>
+        <!-- Circles -->
+        <circle cx="150" cy="150" r="10" fill="#2196F3" opacity="0.5"/>
+        <circle cx="650" cy="450" r="15" fill="#2196F3" opacity="0.5"/>
+        <circle cx="200" cy="500" r="12" fill="#2196F3" opacity="0.5"/>
+        <circle cx="700" cy="200" r="8" fill="#2196F3" opacity="0.5"/>
+        
+        <!-- Lines -->
+        <path d="M50 250 Q 150 200, 250 250" stroke="#90CAF9" stroke-width="2" fill="none"/>
+        <path d="M550 350 Q 650 300, 750 350" stroke="#90CAF9" stroke-width="2" fill="none"/>
+    </g>
+    
+    <!-- Connection Lines -->
+    <g stroke="#2196F3" stroke-width="2" stroke-dasharray="5,5">
+        <path d="M200 200 Q 300 150, 400 200" fill="none"/>
+        <path d="M400 200 Q 500 250, 600 200" fill="none"/>
+    </g>
+</svg>

@@ -1,15 +1,13 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
+import { BarChart3, Clock, Calendar, BookOpen, GraduationCap, Target, Award, Users, Book } from 'lucide-react';
 import { config } from '../config/env';
-import PageContainer from './PageContainer';
-import { BarChart3, Clock, Calendar, BookOpen, GraduationCap, Target } from 'lucide-react';
 
-interface Lesson {
-  id: number;
-  title: string;
-  progress: number;
-  timeSpent: number;
-  grade: number | null;
+interface ProgressStats {
+  subject: string;
+  completedLessons: number;
+  totalLessons: number;
+  averageGrade: number;
 }
 
 interface UpcomingClass {
@@ -22,11 +20,12 @@ interface UpcomingClass {
   zoomLink: string;
 }
 
-interface ProgressStats {
-  subject: string;
-  completedLessons: number;
-  totalLessons: number;
-  averageGrade: number;
+interface Lesson {
+  id: number;
+  title: string;
+  progress: number;
+  timeSpent: number;
+  grade: number | null;
 }
 
 function MainDashboard() {
@@ -36,23 +35,18 @@ function MainDashboard() {
   const [progressStats, setProgressStats] = useState<ProgressStats[]>([]);
 
   useEffect(() => {
-    // Simulating API call to fetch lessons
-    const fetchLessons = async () => {
-      const mockLessons: Lesson[] = [
+    // Fetch mock data
+    const mockData = {
+      lessons: [
         { id: 1, title: 'Introduction to Algebra', progress: 75, timeSpent: 120, grade: 85 },
         { id: 2, title: 'World History: Ancient Civilizations', progress: 50, timeSpent: 90, grade: null },
         { id: 3, title: 'Biology: Cell Structure', progress: 25, timeSpent: 60, grade: 92 },
-      ];
-      setLessons(mockLessons);
-    };
-
-    // Simulating API call to fetch upcoming classes
-    const fetchUpcomingClasses = async () => {
-      const mockClasses: UpcomingClass[] = [
+      ],
+      upcomingClasses: [
         {
           id: 1,
           subject: 'Mathematics',
-          instructor: 'Mr. John Smith',
+          instructor: 'Dr. John Smith',
           date: '2024-12-23',
           time: '09:00 AM',
           duration: 60,
@@ -60,38 +54,27 @@ function MainDashboard() {
         },
         {
           id: 2,
-          subject: 'Biology',
-          instructor: 'Ms. Sarah Johnson',
+          subject: 'Physics',
+          instructor: 'Prof. Sarah Johnson',
           date: '2024-12-23',
           time: '11:00 AM',
           duration: 45,
           zoomLink: 'https://zoom.us/j/987654321'
-        },
-        {
-          id: 3,
-          subject: 'Physics',
-          instructor: 'Dr. Michael Brown',
-          date: '2024-12-24',
-          time: '10:00 AM',
-          duration: 60,
-          zoomLink: 'https://zoom.us/j/456789123'
         }
-      ];
-      setUpcomingClasses(mockClasses);
-    };
-
-    // Simulating API call to fetch progress stats
-    const fetchProgressStats = async () => {
-      const mockStats: ProgressStats[] = [
+      ],
+      progressStats: [
         { subject: 'Mathematics', completedLessons: 15, totalLessons: 20, averageGrade: 88 },
         { subject: 'Science', completedLessons: 12, totalLessons: 18, averageGrade: 92 },
         { subject: 'History', completedLessons: 8, totalLessons: 15, averageGrade: 85 },
         { subject: 'English', completedLessons: 10, totalLessons: 12, averageGrade: 90 }
-      ];
-      setProgressStats(mockStats);
+      ]
     };
 
-    // Simulating API call to fetch AI recommendations
+    setLessons(mockData.lessons);
+    setUpcomingClasses(mockData.upcomingClasses);
+    setProgressStats(mockData.progressStats);
+
+    // Fetch AI recommendations
     const fetchRecommendations = async () => {
       try {
         const response = await fetch(config.apiUrl, {
@@ -105,31 +88,25 @@ function MainDashboard() {
             messages: [
               {
                 role: 'system',
-                content: 'You are an AI that provides personalized learning recommendations based on student data.',
+                content: 'You are an AI that provides personalized learning recommendations.',
               },
               {
                 role: 'user',
-                content: 'Provide 3 personalized learning recommendations for a student who has shown interest in algebra and biology.',
+                content: 'Provide 3 personalized learning recommendations based on current progress.',
               },
             ],
           }),
         });
 
-        if (!response.ok) {
-          throw new Error('Failed to get AI recommendations');
-        }
-
+        if (!response.ok) throw new Error('Failed to get recommendations');
         const data = await response.json();
-        const recommendationsText = data.choices[0].message.content;
-        setRecommendations(recommendationsText.split('\n').filter((rec: string) => rec.trim() !== ''));
+        setRecommendations(data.choices[0].message.content.split('\n').filter(Boolean));
       } catch (error) {
-        console.error('Error getting AI recommendations:', error);
+        console.error('Error getting recommendations:', error);
+        setRecommendations(['Focus on completing Algebra exercises', 'Review Biology notes', 'Practice History quizzes']);
       }
     };
 
-    fetchLessons();
-    fetchUpcomingClasses();
-    fetchProgressStats();
     fetchRecommendations();
   }, []);
 
@@ -137,9 +114,7 @@ function MainDashboard() {
     hidden: { opacity: 0 },
     visible: {
       opacity: 1,
-      transition: {
-        staggerChildren: 0.1
-      }
+      transition: { staggerChildren: 0.1 }
     }
   };
 
@@ -156,176 +131,203 @@ function MainDashboard() {
   };
 
   return (
-    <PageContainer>
-      <motion.div 
-        className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6 h-full"
+    <div className="min-h-screen w-full bg-gray-50">
+      <motion.div
+        className="w-full px-4 py-8"
         variants={containerVariants}
         initial="hidden"
         animate="visible"
       >
-        {/* Recent Lessons */}
-        <motion.div 
-          className="bg-white rounded-2xl shadow-lg p-6 border border-blue-100 overflow-hidden"
-          variants={itemVariants}
-        >
-          <div className="flex items-center mb-6">
-            <BookOpen className="w-6 h-6 text-blue-600 mr-2" />
-            <h2 className="text-2xl font-bold text-blue-600">Recent Lessons</h2>
+        {/* Welcome Section with Illustration */}
+        <div className="flex flex-col md:flex-row items-center justify-between mb-8 bg-white rounded-xl p-6 shadow-lg">
+          <div className="md:w-1/2 mb-6 md:mb-0">
+            <h1 className="text-3xl font-bold text-gray-800 mb-4">Welcome Back!</h1>
+            <p className="text-gray-600 mb-6">
+              Track your progress, manage your classes, and get personalized recommendations
+              to enhance your learning journey.
+            </p>
+            <div className="flex flex-wrap gap-4">
+              <div className="flex items-center bg-blue-50 px-4 py-2 rounded-lg">
+                <Target className="w-5 h-5 text-blue-600 mr-2" />
+                <span className="text-blue-600">Set Goals</span>
+              </div>
+              <div className="flex items-center bg-green-50 px-4 py-2 rounded-lg">
+                <Award className="w-5 h-5 text-green-600 mr-2" />
+                <span className="text-green-600">Track Progress</span>
+              </div>
+              <div className="flex items-center bg-purple-50 px-4 py-2 rounded-lg">
+                <Book className="w-5 h-5 text-purple-600 mr-2" />
+                <span className="text-purple-600">Learn Daily</span>
+              </div>
+            </div>
           </div>
-          <div className="space-y-4">
-            {lessons.map((lesson) => (
-              <motion.div 
-                key={lesson.id} 
-                className="p-4 bg-blue-50 rounded-xl transition-all duration-300 hover:shadow-md"
-                whileHover={{ scale: 1.02 }}
-              >
-                <h3 className="font-semibold text-blue-800">{lesson.title}</h3>
-                <div className="mt-2 flex items-center">
-                  <div className="flex-1 bg-blue-200 rounded-full h-2 overflow-hidden">
-                    <motion.div
-                      className="bg-blue-600 h-2 rounded-full"
-                      initial={{ width: 0 }}
-                      animate={{ width: `${lesson.progress}%` }}
-                      transition={{ duration: 1, ease: "easeOut" }}
-                    />
-                  </div>
-                  <span className="ml-2 text-sm text-blue-600 font-medium">{lesson.progress}%</span>
-                </div>
-                <div className="mt-2 text-sm text-blue-600">
-                  Time spent: {lesson.timeSpent} minutes
-                </div>
-                {lesson.grade && (
-                  <div className="mt-1 text-sm text-green-600 font-semibold">
-                    Grade: {lesson.grade}%
-                  </div>
-                )}
-              </motion.div>
-            ))}
+          <div className="md:w-1/2 flex justify-center">
+            <img
+              src="/images/dashboard-illustration.svg"
+              alt="Dashboard Illustration"
+              className="w-full max-w-md h-auto"
+            />
           </div>
-        </motion.div>
+        </div>
 
-        {/* Progress Overview */}
-        <motion.div 
-          className="bg-white rounded-2xl shadow-lg p-6 border border-blue-100"
+        {/* Quick Stats */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+          {progressStats.map((stat, index) => (
+            <motion.div
+              key={stat.subject}
+              variants={itemVariants}
+              className="bg-white rounded-xl shadow-md p-6 hover:shadow-lg transition-shadow"
+            >
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-semibold text-gray-800">{stat.subject}</h3>
+                <div className="p-2 bg-blue-50 rounded-lg">
+                  <GraduationCap className="w-6 h-6 text-blue-600" />
+                </div>
+              </div>
+              <div className="space-y-2">
+                <div className="flex justify-between text-sm">
+                  <span className="text-gray-600">Progress</span>
+                  <span className="font-medium text-blue-600">
+                    {Math.round((stat.completedLessons / stat.totalLessons) * 100)}%
+                  </span>
+                </div>
+                <div className="w-full bg-gray-200 rounded-full h-2">
+                  <div
+                    className="bg-blue-600 rounded-full h-2"
+                    style={{
+                      width: `${(stat.completedLessons / stat.totalLessons) * 100}%`
+                    }}
+                  />
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-gray-600">Average Grade</span>
+                  <span className="font-medium text-green-600">{stat.averageGrade}%</span>
+                </div>
+              </div>
+            </motion.div>
+          ))}
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Recent Lessons */}
+          <motion.div
+            variants={itemVariants}
+            className="lg:col-span-2 bg-white rounded-xl shadow-md p-6"
+          >
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-xl font-bold text-gray-800">Recent Lessons</h2>
+              <div className="p-2 bg-blue-50 rounded-lg">
+                <BookOpen className="w-6 h-6 text-blue-600" />
+              </div>
+            </div>
+            <div className="space-y-4">
+              {lessons.map((lesson) => (
+                <motion.div
+                  key={lesson.id}
+                  className="p-4 bg-gray-50 rounded-xl hover:bg-gray-100 transition-colors"
+                  whileHover={{ scale: 1.02 }}
+                >
+                  <div className="flex justify-between items-center mb-2">
+                    <h3 className="font-medium text-gray-800">{lesson.title}</h3>
+                    {lesson.grade && (
+                      <span className="px-3 py-1 bg-green-100 text-green-600 rounded-full text-sm">
+                        Grade: {lesson.grade}%
+                      </span>
+                    )}
+                  </div>
+                  <div className="flex items-center justify-between text-sm">
+                    <div className="flex items-center text-gray-600">
+                      <Clock className="w-4 h-4 mr-2" />
+                      {lesson.timeSpent} mins
+                    </div>
+                    <div className="flex items-center">
+                      <span className="text-gray-600 mr-2">Progress:</span>
+                      <div className="w-32 bg-gray-200 rounded-full h-2">
+                        <div
+                          className="bg-blue-600 rounded-full h-2"
+                          style={{ width: `${lesson.progress}%` }}
+                        />
+                      </div>
+                      <span className="ml-2 text-blue-600">{lesson.progress}%</span>
+                    </div>
+                  </div>
+                </motion.div>
+              ))}
+            </div>
+          </motion.div>
+
+          {/* Upcoming Classes */}
+          <motion.div
+            variants={itemVariants}
+            className="bg-white rounded-xl shadow-md p-6"
+          >
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-xl font-bold text-gray-800">Upcoming Classes</h2>
+              <div className="p-2 bg-blue-50 rounded-lg">
+                <Calendar className="w-6 h-6 text-blue-600" />
+              </div>
+            </div>
+            <div className="space-y-4">
+              {upcomingClasses.map((class_) => (
+                <motion.div
+                  key={class_.id}
+                  className="p-4 border border-gray-100 rounded-xl hover:border-blue-200 transition-colors"
+                  whileHover={{ scale: 1.02 }}
+                >
+                  <h3 className="font-medium text-gray-800 mb-2">{class_.subject}</h3>
+                  <div className="space-y-2 text-sm">
+                    <div className="flex items-center text-gray-600">
+                      <Users className="w-4 h-4 mr-2" />
+                      {class_.instructor}
+                    </div>
+                    <div className="flex items-center text-gray-600">
+                      <Calendar className="w-4 h-4 mr-2" />
+                      {class_.date} at {class_.time}
+                    </div>
+                    <div className="flex items-center text-gray-600">
+                      <Clock className="w-4 h-4 mr-2" />
+                      {class_.duration} minutes
+                    </div>
+                    <a
+                      href={class_.zoomLink}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-block w-full px-4 py-2 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 transition-colors text-center mt-2"
+                    >
+                      Join Class
+                    </a>
+                  </div>
+                </motion.div>
+              ))}
+            </div>
+          </motion.div>
+        </div>
+
+        {/* AI Recommendations */}
+        <motion.div
           variants={itemVariants}
+          className="mt-6 bg-white rounded-xl shadow-md p-6"
         >
-          <div className="flex items-center mb-6">
-            <BarChart3 className="w-6 h-6 text-blue-600 mr-2" />
-            <h2 className="text-2xl font-bold text-blue-600">Progress Overview</h2>
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-xl font-bold text-gray-800">Personalized Recommendations</h2>
+            <div className="p-2 bg-blue-50 rounded-lg">
+              <Target className="w-6 h-6 text-blue-600" />
+            </div>
           </div>
-          <div className="space-y-6">
-            {progressStats.map((stat, index) => (
+          <div className="grid md:grid-cols-3 gap-4">
+            {recommendations.map((recommendation, index) => (
               <motion.div
                 key={index}
                 className="p-4 bg-blue-50 rounded-xl"
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: index * 0.1 }}
-              >
-                <div className="flex justify-between items-center mb-2">
-                  <h3 className="font-semibold text-blue-800">{stat.subject}</h3>
-                  <span className="text-sm text-blue-600 font-medium">
-                    {Math.round((stat.completedLessons / stat.totalLessons) * 100)}% Complete
-                  </span>
-                </div>
-                <div className="flex items-center space-x-4">
-                  <div className="flex items-center">
-                    <BookOpen className="w-4 h-4 text-blue-500 mr-1" />
-                    <span className="text-sm text-blue-600">
-                      {stat.completedLessons}/{stat.totalLessons} Lessons
-                    </span>
-                  </div>
-                  <div className="flex items-center">
-                    <Target className="w-4 h-4 text-green-500 mr-1" />
-                    <span className="text-sm text-green-600 font-medium">
-                      {stat.averageGrade}% Avg
-                    </span>
-                  </div>
-                </div>
-                <div className="mt-2 bg-blue-200 rounded-full h-2 overflow-hidden">
-                  <motion.div
-                    className="bg-blue-600 h-2 rounded-full"
-                    initial={{ width: 0 }}
-                    animate={{ width: `${(stat.completedLessons / stat.totalLessons) * 100}%` }}
-                    transition={{ duration: 1, ease: "easeOut" }}
-                  />
-                </div>
-              </motion.div>
-            ))}
-          </div>
-        </motion.div>
-
-        {/* Upcoming Classes */}
-        <motion.div 
-          className="bg-white rounded-2xl shadow-lg p-6 border border-blue-100"
-          variants={itemVariants}
-        >
-          <div className="flex items-center mb-6">
-            <Calendar className="w-6 h-6 text-blue-600 mr-2" />
-            <h2 className="text-2xl font-bold text-blue-600">Upcoming Classes</h2>
-          </div>
-          <div className="space-y-4">
-            {upcomingClasses.map((class_) => (
-              <motion.div
-                key={class_.id}
-                className="p-4 bg-blue-50 rounded-xl hover:shadow-md transition-all duration-300"
                 whileHover={{ scale: 1.02 }}
               >
-                <div className="flex justify-between items-start">
-                  <div>
-                    <h3 className="font-semibold text-blue-800">{class_.subject}</h3>
-                    <p className="text-sm text-blue-600 mt-1">{class_.instructor}</p>
-                  </div>
-                  <div className="text-right">
-                    <p className="text-sm font-medium text-blue-600">{class_.time}</p>
-                    <p className="text-sm text-blue-500">{class_.duration} mins</p>
-                  </div>
-                </div>
-                <div className="mt-3 flex items-center justify-between">
-                  <div className="flex items-center text-sm text-blue-600">
-                    <Clock className="w-4 h-4 mr-1" />
-                    <span>{new Date(class_.date).toLocaleDateString()}</span>
-                  </div>
-                  <a
-                    href={class_.zoomLink}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="px-3 py-1 bg-blue-500 text-white text-sm rounded-lg hover:bg-blue-600 transition-colors"
-                  >
-                    Join Class
-                  </a>
-                </div>
+                <p className="text-blue-800">{recommendation}</p>
               </motion.div>
             ))}
           </div>
         </motion.div>
-
-        {/* AI Recommendations */}
-        <motion.div 
-          className="bg-white rounded-2xl shadow-lg p-6 border border-blue-100"
-          variants={itemVariants}
-        >
-          <div className="flex items-center mb-6">
-            <GraduationCap className="w-6 h-6 text-blue-600 mr-2" />
-            <h2 className="text-2xl font-bold text-blue-600">AI Recommendations</h2>
-          </div>
-          <ul className="space-y-2">
-            {recommendations.map((rec, index) => (
-              <motion.li 
-                key={index} 
-                className="flex items-start"
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: index * 0.2 }}
-              >
-                <span className="text-blue-500 mr-2">•</span>
-                <span className="text-blue-800">{rec}</span>
-              </motion.li>
-            ))}
-          </ul>
-        </motion.div>
       </motion.div>
-    </PageContainer>
+    </div>
   );
 }
 

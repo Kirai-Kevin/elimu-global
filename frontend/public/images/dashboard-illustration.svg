@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="800" height="600" viewBox="0 0 800 600" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <!-- Background Elements -->
+    <rect width="800" height="600" fill="#F8FAFF"/>
+    <circle cx="400" cy="300" r="280" fill="#E3F2FD" opacity="0.5"/>
+    <circle cx="400" cy="300" r="200" fill="#BBDEFB" opacity="0.3"/>
+
+    <!-- Main Dashboard Card -->
+    <g transform="translate(250, 100)">
+        <!-- Card Background -->
+        <rect x="0" y="0" width="300" height="400" rx="20" fill="white" stroke="#2196F3" stroke-width="2"/>
+        
+        <!-- Progress Circle -->
+        <circle cx="150" cy="100" r="60" stroke="#2196F3" stroke-width="10" fill="none" stroke-dasharray="302" stroke-dashoffset="75"/>
+        <text x="150" y="110" text-anchor="middle" font-size="24" fill="#1976D2" font-weight="bold">75%</text>
+        
+        <!-- Chart Bars -->
+        <rect x="50" y="200" width="30" height="100" fill="#2196F3"/>
+        <rect x="100" y="180" width="30" height="120" fill="#1976D2"/>
+        <rect x="150" y="150" width="30" height="150" fill="#2196F3"/>
+        <rect x="200" y="220" width="30" height="80" fill="#1976D2"/>
+    </g>
+
+    <!-- Floating Elements -->
+    <g>
+        <!-- Books -->
+        <rect x="100" y="150" width="80" height="100" rx="5" fill="#1976D2"/>
+        <rect x="105" y="160" width="70" height="10" fill="white"/>
+        <rect x="105" y="180" width="70" height="5" fill="white"/>
+        
+        <!-- Calendar -->
+        <rect x="650" y="200" width="100" height="120" rx="10" fill="white" stroke="#2196F3" stroke-width="2"/>
+        <rect x="660" y="220" width="80" height="20" fill="#BBDEFB"/>
+        <rect x="660" y="250" width="80" height="20" fill="#E3F2FD"/>
+        <rect x="660" y="280" width="80" height="20" fill="#E3F2FD"/>
+        
+        <!-- Achievement Star -->
+        <path d="M700 100 L710 120 L730 120 L715 135 L720 155 L700 145 L680 155 L685 135 L670 120 L690 120 Z" fill="#FFC107"/>
+    </g>
+
+    <!-- Decorative Elements -->
+    <g>
+        <!-- Circles -->
+        <circle cx="150" cy="450" r="10" fill="#2196F3" opacity="0.5"/>
+        <circle cx="650" cy="450" r="15" fill="#2196F3" opacity="0.5"/>
+        <circle cx="200" cy="500" r="12" fill="#2196F3" opacity="0.5"/>
+        <circle cx="600" cy="150" r="8" fill="#2196F3" opacity="0.5"/>
+        
+        <!-- Lines -->
+        <path d="M50 250 Q 150 200, 250 250" stroke="#90CAF9" stroke-width="2" fill="none"/>
+        <path d="M550 350 Q 650 300, 750 350" stroke="#90CAF9" stroke-width="2" fill="none"/>
+    </g>
+
+    <!-- Icons -->
+    <g>
+        <!-- Graph Icon -->
+        <path d="M100 400 L150 350 L200 380 L250 320" stroke="#1976D2" stroke-width="3" fill="none"/>
+        
+        <!-- Task Icons -->
+        <circle cx="600" cy="400" r="20" fill="#4CAF50"/>
+        <path d="M590 400 L600 410 L615 395" stroke="white" stroke-width="3"/>
+    </g>
+
+    <!-- Small Decorative Elements -->
+    <g>
+        <circle cx="100" cy="100" r="5" fill="#FFC107"/>
+        <circle cx="700" cy="500" r="5" fill="#FFC107"/>
+        <circle cx="400" cy="50" r="5" fill="#FFC107"/>
+    </g>
+</svg>

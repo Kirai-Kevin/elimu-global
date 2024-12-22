@@ -1,0 +1,121 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="800" height="600" viewBox="0 0 800 600" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <!-- Background Elements -->
+    <circle cx="400" cy="300" r="250" fill="#E3F2FD" opacity="0.5"/>
+    <circle cx="400" cy="300" r="200" fill="#BBDEFB" opacity="0.3"/>
+    
+    <!-- Library Bookshelves -->
+    <g transform="translate(100, 100)">
+        <!-- Bookshelf 1 -->
+        <rect x="0" y="0" width="200" height="300" fill="#795548"/>
+        <rect x="10" y="10" width="180" height="80" fill="#8D6E63"/>
+        <rect x="10" y="100" width="180" height="80" fill="#8D6E63"/>
+        <rect x="10" y="190" width="180" height="80" fill="#8D6E63"/>
+        
+        <!-- Books on Shelf 1 -->
+        <g transform="translate(15, 15)">
+            <rect x="0" y="0" width="20" height="70" fill="#2196F3"/>
+            <rect x="25" y="0" width="15" height="70" fill="#4CAF50"/>
+            <rect x="45" y="0" width="25" height="70" fill="#FFC107"/>
+            <rect x="75" y="0" width="18" height="70" fill="#9C27B0"/>
+            <rect x="98" y="0" width="22" height="70" fill="#F44336"/>
+            <rect x="125" y="0" width="15" height="70" fill="#3F51B5"/>
+            <rect x="145" y="0" width="25" height="70" fill="#009688"/>
+        </g>
+        
+        <!-- Books on Shelf 2 -->
+        <g transform="translate(15, 105)">
+            <rect x="0" y="0" width="25" height="70" fill="#E91E63"/>
+            <rect x="30" y="0" width="20" height="70" fill="#CDDC39"/>
+            <rect x="55" y="0" width="15" height="70" fill="#FF5722"/>
+            <rect x="75" y="0" width="28" height="70" fill="#607D8B"/>
+            <rect x="108" y="0" width="17" height="70" fill="#9C27B0"/>
+            <rect x="130" y="0" width="22" height="70" fill="#2196F3"/>
+            <rect x="157" y="0" width="18" height="70" fill="#4CAF50"/>
+        </g>
+        
+        <!-- Books on Shelf 3 -->
+        <g transform="translate(15, 195)">
+            <rect x="0" y="0" width="18" height="70" fill="#FF9800"/>
+            <rect x="23" y="0" width="25" height="70" fill="#03A9F4"/>
+            <rect x="53" y="0" width="20" height="70" fill="#E91E63"/>
+            <rect x="78" y="0" width="15" height="70" fill="#8BC34A"/>
+            <rect x="98" y="0" width="22" height="70" fill="#9C27B0"/>
+            <rect x="125" y="0" width="28" height="70" fill="#FF5722"/>
+            <rect x="158" y="0" width="17" height="70" fill="#3F51B5"/>
+        </g>
+    </g>
+    
+    <!-- Study Table -->
+    <g transform="translate(400, 150)">
+        <!-- Table Surface -->
+        <rect x="0" y="0" width="300" height="200" rx="10" fill="#A1887F"/>
+        <rect x="10" y="10" width="280" height="180" rx="5" fill="#BCAAA4"/>
+        
+        <!-- Open Book -->
+        <g transform="translate(50, 40)">
+            <path d="M0 0 L100 0 L100 120 L0 120 C20 120, 20 0, 0 0" fill="#FFFFFF"/>
+            <path d="M100 0 L200 0 L200 120 L100 120 C80 120, 80 0, 100 0" fill="#FFFFFF"/>
+            <rect x="20" y="20" width="60" height="2" fill="#757575"/>
+            <rect x="20" y="30" width="50" height="2" fill="#757575"/>
+            <rect x="20" y="40" width="55" height="2" fill="#757575"/>
+            <rect x="120" y="20" width="60" height="2" fill="#757575"/>
+            <rect x="120" y="30" width="50" height="2" fill="#757575"/>
+            <rect x="120" y="40" width="55" height="2" fill="#757575"/>
+        </g>
+        
+        <!-- Laptop -->
+        <g transform="translate(180, 60)">
+            <rect x="0" y="0" width="100" height="70" rx="5" fill="#424242"/>
+            <rect x="5" y="5" width="90" height="60" fill="#2196F3"/>
+            <path d="M-10 70 L110 70 L100 90 L0 90 Z" fill="#424242"/>
+        </g>
+    </g>
+    
+    <!-- Reading Area -->
+    <g transform="translate(150, 450)">
+        <!-- Comfortable Chair -->
+        <path d="M0 0 C20 -20, 80 -20, 100 0 L100 50 L0 50 Z" fill="#78909C"/>
+        <rect x="20" y="50" width="60" height="40" fill="#546E7A"/>
+        <path d="M10 90 L90 90 L100 100 L0 100 Z" fill="#455A64"/>
+    </g>
+    
+    <!-- Decorative Elements -->
+    <g>
+        <!-- Plants -->
+        <g transform="translate(50, 500)">
+            <rect x="0" y="0" width="40" height="50" fill="#4CAF50"/>
+            <path d="M20 -20 C40 -10, 0 -10, 20 10" stroke="#4CAF50" stroke-width="4" fill="none"/>
+            <path d="M20 -15 C0 -5, 40 -5, 20 15" stroke="#4CAF50" stroke-width="4" fill="none"/>
+        </g>
+        
+        <!-- Wall Clock -->
+        <g transform="translate(700, 100)">
+            <circle cx="0" cy="0" r="30" fill="#FFFFFF" stroke="#757575" stroke-width="2"/>
+            <line x1="0" y1="0" x2="0" y2="-15" stroke="#757575" stroke-width="2"/>
+            <line x1="0" y1="0" x2="10" y2="0" stroke="#757575" stroke-width="2"/>
+        </g>
+    </g>
+    
+    <!-- Reading Lamp -->
+    <g transform="translate(600, 400)">
+        <path d="M0 0 L30 -50 L60 0" fill="none" stroke="#FFC107" stroke-width="4"/>
+        <circle cx="30" cy="-55" r="15" fill="#FFC107"/>
+        <path d="M30 -40 L30 100" stroke="#FFC107" stroke-width="4"/>
+        <circle cx="30" cy="100" r="10" fill="#FFC107"/>
+    </g>
+    
+    <!-- Floating Books -->
+    <g>
+        <g transform="translate(650, 200) rotate(-15)">
+            <rect width="40" height="60" fill="#2196F3"/>
+            <rect x="5" y="20" width="30" height="2" fill="#FFFFFF"/>
+            <rect x="5" y="30" width="20" height="2" fill="#FFFFFF"/>
+        </g>
+        <g transform="translate(700, 300) rotate(15)">
+            <rect width="40" height="60" fill="#4CAF50"/>
+            <rect x="5" y="20" width="30" height="2" fill="#FFFFFF"/>
+            <rect x="5" y="30" width="20" height="2" fill="#FFFFFF"/>
+        </g>
+    </g>
+</svg>
