@@ -1,4 +1,4 @@
-import { BrowserRouter as Router, Route, Routes, Navigate } from 'react-router-dom';
+import { BrowserRouter as Router, Route, Routes, Navigate, useLocation } from 'react-router-dom';
 import Layout from './components/Layout';
 import LoginSignUp from './components/LoginSignUp';
 import AllStudentsDashboard from './components/AllStudentsDashboard';
@@ -25,8 +25,22 @@ const isAuthenticated = () => {
 
 // Protected Route wrapper component
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
+  const location = useLocation();
+
   if (!isAuthenticated()) {
+    // Save the attempted URL
+    sessionStorage.setItem('redirectUrl', location.pathname);
     return <Navigate to="/login" replace />;
+  }
+
+  return <>{children}</>;
+};
+
+// Auth Route wrapper component (for login/signup)
+const AuthRoute = ({ children }: { children: React.ReactNode }) => {
+  if (isAuthenticated()) {
+    // If user is already authenticated, redirect to dashboard
+    return <Navigate to="/dashboard" replace />;
   }
   return <>{children}</>;
 };
@@ -37,7 +51,14 @@ function App() {
       <Routes>
         {/* Public Routes - Login is the default route */}
         <Route path="/" element={<Navigate to="/login" replace />} />
-        <Route path="/login" element={<LoginSignUp />} />
+        <Route 
+          path="/login" 
+          element={
+            <AuthRoute>
+              <LoginSignUp />
+            </AuthRoute>
+          } 
+        />
         
         {/* All Students Dashboard - requires authentication */}
         <Route 

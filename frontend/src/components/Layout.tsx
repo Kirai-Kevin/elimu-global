@@ -5,17 +5,17 @@ import { HomeIcon, UserIcon, AwardIcon, VideoIcon, BookOpenIcon, CalendarIcon, F
 import ChatBot from './ChatBot';
 
 const sidebarItems = [
-  { name: 'Dashboard', icon: HomeIcon, path: '/' },
-  { name: 'Select Instructor', icon: UserIcon, path: '/select-instructor' },
-  { name: 'Achievements', icon: AwardIcon, path: '/achievements' },
-  { name: 'Classes', icon: VideoIcon, path: '/classes' },
-  { name: 'Assignments', icon: BookOpenIcon, path: '/assignments' },
-  { name: 'Lessons', icon: BookOpenIcon, path: '/lessons' },
-  { name: 'Calendar', icon: CalendarIcon, path: '/calendar' },
-  { name: 'Materials', icon: FolderIcon, path: '/materials' },
-  { name: 'Library', icon: LibraryIcon, path: '/library' },
-  { name: 'Progress', icon: BarChartIcon, path: '/progress' },
-  { name: 'More', icon: MoreHorizontalIcon, path: '/more' },
+  { name: 'Dashboard', icon: HomeIcon, path: '/dashboard' },
+  { name: 'Select Instructor', icon: UserIcon, path: '/dashboard/select-instructor' },
+  { name: 'Achievements', icon: AwardIcon, path: '/dashboard/achievements' },
+  { name: 'Classes', icon: VideoIcon, path: '/dashboard/classes' },
+  { name: 'Assignments', icon: BookOpenIcon, path: '/dashboard/assignments' },
+  { name: 'Lessons', icon: BookOpenIcon, path: '/dashboard/lessons' },
+  { name: 'Calendar', icon: CalendarIcon, path: '/dashboard/calendar' },
+  { name: 'Materials', icon: FolderIcon, path: '/dashboard/materials' },
+  { name: 'Library', icon: LibraryIcon, path: '/dashboard/library' },
+  { name: 'Progress', icon: BarChartIcon, path: '/dashboard/progress' },
+  { name: 'More', icon: MoreHorizontalIcon, path: '/dashboard/more' },
 ];
 
 function Layout() {

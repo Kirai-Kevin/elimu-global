@@ -54,14 +54,20 @@ function LoginSignUp() {
       }
 
       const data = await response.json();
-      // Store AI recommendations for use in the dashboard
       localStorage.setItem('recommendations', data.choices[0].message.content);
     } catch (error) {
       console.error('Error getting AI recommendations:', error);
     }
 
-    // Redirect to All Students Dashboard
-    navigate('/all-students');
+    // Check if there's a redirect URL saved
+    const redirectUrl = sessionStorage.getItem('redirectUrl');
+    if (redirectUrl) {
+      sessionStorage.removeItem('redirectUrl'); // Clear the saved URL
+      navigate(redirectUrl); // Navigate to the saved URL
+    } else {
+      // Default navigation to all-students
+      navigate('/all-students');
+    }
   };
 
   const containerVariants = {
@@ -78,99 +84,125 @@ function LoginSignUp() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-r from-blue-400 to-blue-600">
+    <div className="min-h-screen w-full flex items-center justify-center bg-gradient-to-br from-blue-400 via-blue-500 to-blue-600 p-4">
       <motion.div 
-        className="bg-white p-8 rounded-lg shadow-md w-96"
+        className="w-full max-w-md bg-white rounded-2xl shadow-2xl overflow-hidden"
         variants={containerVariants}
         initial="hidden"
         animate="visible"
       >
-        <h2 className="text-2xl font-bold mb-6 text-center text-blue-800">
-          {isLogin ? 'Login' : 'Sign Up'} to Elimu Global
-        </h2>
-        <form onSubmit={handleSubmit}>
-          {!isLogin && (
-            <>
+        {/* Logo or Brand Section */}
+        <div className="bg-gradient-to-r from-blue-500 to-blue-600 px-8 py-6 text-white text-center">
+          <h2 className="text-3xl font-bold mb-2">Elimu Global</h2>
+          <p className="text-blue-100">Your Gateway to Quality Education</p>
+        </div>
+
+        <div className="p-8">
+          <h3 className="text-2xl font-bold mb-6 text-center text-gray-800">
+            {isLogin ? 'Welcome Back!' : 'Create Your Account'}
+          </h3>
+
+          <form onSubmit={handleSubmit} className="space-y-4">
+            {!isLogin && (
+              <>
+                <div>
+                  <input
+                    type="text"
+                    name="name"
+                    placeholder="Full Name"
+                    onChange={handleChange}
+                    className="w-full p-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                    required
+                  />
+                </div>
+                <div>
+                  <input
+                    type="tel"
+                    name="phone"
+                    placeholder="Phone Number"
+                    onChange={handleChange}
+                    className="w-full p-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                    required
+                  />
+                </div>
+                <div>
+                  <select
+                    name="curriculum"
+                    onChange={handleChange}
+                    className="w-full p-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 bg-white"
+                    required
+                  >
+                    <option value="">Select Curriculum</option>
+                    <option value="844">844</option>
+                    <option value="CBC">CBC</option>
+                    <option value="British">British</option>
+                    <option value="American">American</option>
+                  </select>
+                </div>
+                <div>
+                  <input
+                    type="text"
+                    name="form"
+                    placeholder="Form/Class"
+                    onChange={handleChange}
+                    className="w-full p-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                    required
+                  />
+                </div>
+                <div>
+                  <input
+                    type="text"
+                    name="preferences"
+                    placeholder="Learning Preferences (e.g., Math, Science)"
+                    onChange={handleChange}
+                    className="w-full p-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                    required
+                  />
+                </div>
+              </>
+            )}
+            <div>
               <input
-                type="text"
-                name="name"
-                placeholder="Full Name"
+                type="email"
+                name="email"
+                placeholder="Email Address"
                 onChange={handleChange}
-                className="w-full p-2 mb-4 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full p-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
                 required
               />
+            </div>
+            <div>
               <input
-                type="tel"
-                name="phone"
-                placeholder="Phone Number"
+                type="password"
+                name="password"
+                placeholder="Password"
                 onChange={handleChange}
-                className="w-full p-2 mb-4 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full p-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
                 required
               />
-              <select
-                name="curriculum"
-                onChange={handleChange}
-                className="w-full p-2 mb-4 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-                required
+            </div>
+            <motion.button
+              type="submit"
+              className="w-full bg-gradient-to-r from-blue-500 to-blue-600 text-white py-3 px-6 rounded-xl font-semibold hover:from-blue-600 hover:to-blue-700 transition-all duration-200 shadow-md"
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+            >
+              {isLogin ? 'Sign In' : 'Create Account'}
+            </motion.button>
+          </form>
+
+          <div className="mt-6 text-center">
+            <p className="text-gray-600">
+              {isLogin ? "Don't have an account? " : "Already have an account? "}
+              <button
+                onClick={() => setIsLogin(!isLogin)}
+                className="text-blue-500 font-semibold hover:text-blue-600 transition-colors"
               >
-                <option value="">Select Curriculum</option>
-                <option value="844">844</option>
-                <option value="CBC">CBC</option>
-                <option value="British">British</option>
-                <option value="American">American</option>
-              </select>
-              <input
-                type="text"
-                name="form"
-                placeholder="Form/Class"
-                onChange={handleChange}
-                className="w-full p-2 mb-4 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-                required
-              />
-              <input
-                type="text"
-                name="preferences"
-                placeholder="Learning Preferences"
-                onChange={handleChange}
-                className="w-full p-2 mb-4 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-                required
-              />
-            </>
-          )}
-          <input
-            type="email"
-            name="email"
-            placeholder="Email"
-            onChange={handleChange}
-            className="w-full p-2 mb-4 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-            required
-          />
-          <input
-            type="password"
-            name="password"
-            placeholder="Password"
-            onChange={handleChange}
-            className="w-full p-2 mb-6 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-            required
-          />
-          <motion.button
-            type="submit"
-            className="w-full bg-blue-500 text-white p-2 rounded hover:bg-blue-600 transition-colors"
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-          >
-            {isLogin ? 'Login' : 'Sign Up'}
-          </motion.button>
-        </form>
-        <p className="mt-4 text-center">
-          {isLogin ? "Don't have an account? " : "Already have an account? "}
-          <button
-            onClick={() => setIsLogin(!isLogin)}
-            className="text-blue-500 hover:underline"
-          >
-            {isLogin ? 'Sign Up' : 'Login'}
-          </button>
-        </p>
+                {isLogin ? 'Sign Up' : 'Sign In'}
+              </button>
+            </p>
+          </div>
+        </div>
       </motion.div>
     </div>
   );
