@@ -17,6 +17,8 @@ import AccountSettings from './components/AccountSettings';
 import NotificationPreferences from './components/NotificationPreferences';
 import PrivacySettings from './components/PrivacySettings';
 import LanguagePreferences from './components/LanguagePreferences';
+import Schedule from './components/Schedule';
+import Resources from './components/Resources';
 
 // Simple auth check
 const isAuthenticated = () => {
@@ -89,6 +91,8 @@ function App() {
           <Route path="classes" element={<Classes />} />
           <Route path="assignments" element={<Assignments />} />
           <Route path="lessons" element={<Lessons />} />
+          <Route path="schedule" element={<Schedule />} />
+          <Route path="resources" element={<Resources />} />
           <Route path="calendar" element={<Calendar />} />
           <Route path="materials" element={<Materials />} />
           <Route path="library" element={<Library />} />

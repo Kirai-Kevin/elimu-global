@@ -77,9 +77,9 @@ function Schedule() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen w-full bg-gray-50">
       <motion.div
-        className="container mx-auto px-4 py-8"
+        className="w-full px-4 py-8"
         variants={containerVariants}
         initial="hidden"
         animate="visible"
