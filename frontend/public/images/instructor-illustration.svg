@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="800" height="600" viewBox="0 0 800 600" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <!-- Background Elements -->
+    <circle cx="400" cy="300" r="250" fill="#E3F2FD" opacity="0.5"/>
+    <circle cx="400" cy="300" r="200" fill="#BBDEFB" opacity="0.3"/>
+    
+    <!-- Teacher Figure -->
+    <g transform="translate(300, 150)">
+        <!-- Head -->
+        <circle cx="100" cy="100" r="60" fill="#FFB74D"/>
+        <circle cx="100" cy="85" r="45" fill="#FFA726"/>
+        
+        <!-- Glasses -->
+        <path d="M70 85 H130" stroke="#424242" stroke-width="3"/>
+        <circle cx="75" cy="85" r="15" stroke="#424242" stroke-width="3" fill="none"/>
+        <circle cx="125" cy="85" r="15" stroke="#424242" stroke-width="3" fill="none"/>
+        
+        <!-- Body -->
+        <path d="M100 160 L100 350" stroke="#1976D2" stroke-width="40"/>
+        <path d="M100 200 L50 300" stroke="#1976D2" stroke-width="20"/>
+        <path d="M100 200 L150 300" stroke="#1976D2" stroke-width="20"/>
+        
+        <!-- Book -->
+        <rect x="30" y="250" width="60" height="80" fill="#2196F3"/>
+        <rect x="35" y="255" width="50" height="10" fill="white"/>
+        <rect x="35" y="270" width="50" height="5" fill="white"/>
+        <rect x="35" y="280" width="40" height="5" fill="white"/>
+    </g>
+    
+    <!-- Floating Elements -->
+    <g transform="translate(200, 100)">
+        <!-- Mathematical Symbols -->
+        <text x="0" y="0" font-size="40" fill="#1976D2">∑</text>
+        <text x="50" y="50" font-size="40" fill="#1976D2">π</text>
+        <text x="100" y="0" font-size="40" fill="#1976D2">∫</text>
+        <text x="400" y="50" font-size="40" fill="#1976D2">θ</text>
+        <text x="350" y="100" font-size="40" fill="#1976D2">√</text>
+    </g>
+    
+    <!-- Decorative Circles -->
+    <circle cx="150" cy="150" r="10" fill="#2196F3" opacity="0.5"/>
+    <circle cx="650" cy="450" r="15" fill="#2196F3" opacity="0.5"/>
+    <circle cx="200" cy="500" r="12" fill="#2196F3" opacity="0.5"/>
+    <circle cx="600" cy="200" r="8" fill="#2196F3" opacity="0.5"/>
+    
+    <!-- Abstract Lines -->
+    <path d="M50 250 Q 200 150, 350 250" stroke="#90CAF9" stroke-width="2" fill="none"/>
+    <path d="M450 350 Q 600 250, 750 350" stroke="#90CAF9" stroke-width="2" fill="none"/>
+    
+    <!-- Stars -->
+    <path d="M700 100 L710 120 L730 120 L715 135 L720 155 L700 145 L680 155 L685 135 L670 120 L690 120 Z" fill="#FFC107"/>
+    <path d="M100 500 L110 520 L130 520 L115 535 L120 555 L100 545 L80 555 L85 535 L70 520 L90 520 Z" fill="#FFC107"/>
+</svg>
