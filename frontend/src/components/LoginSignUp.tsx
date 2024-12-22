@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { motion } from 'framer-motion';
 import { config } from '../config/env';
 
 function LoginSignUp() {
@@ -61,10 +62,28 @@ function LoginSignUp() {
     navigate('/all-students');
   };
 
+  const containerVariants = {
+    hidden: { opacity: 0, y: 20 },
+    visible: { 
+      opacity: 1, 
+      y: 0,
+      transition: {
+        type: 'spring',
+        stiffness: 100,
+        damping: 10
+      }
+    },
+  };
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-r from-blue-400 to-blue-600">
-      <div className="bg-white p-8 rounded-lg shadow-md w-96">
-        <h2 className="text-2xl font-bold mb-6 text-center">
+      <motion.div 
+        className="bg-white p-8 rounded-lg shadow-md w-96"
+        variants={containerVariants}
+        initial="hidden"
+        animate="visible"
+      >
+        <h2 className="text-2xl font-bold mb-6 text-center text-blue-800">
           {isLogin ? 'Login' : 'Sign Up'} to Elimu Global
         </h2>
         <form onSubmit={handleSubmit}>
@@ -75,7 +94,7 @@ function LoginSignUp() {
                 name="name"
                 placeholder="Full Name"
                 onChange={handleChange}
-                className="w-full p-2 mb-4 border rounded"
+                className="w-full p-2 mb-4 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
                 required
               />
               <input
@@ -83,13 +102,13 @@ function LoginSignUp() {
                 name="phone"
                 placeholder="Phone Number"
                 onChange={handleChange}
-                className="w-full p-2 mb-4 border rounded"
+                className="w-full p-2 mb-4 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
                 required
               />
               <select
                 name="curriculum"
                 onChange={handleChange}
-                className="w-full p-2 mb-4 border rounded"
+                className="w-full p-2 mb-4 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
                 required
               >
                 <option value="">Select Curriculum</option>
@@ -103,7 +122,7 @@ function LoginSignUp() {
                 name="form"
                 placeholder="Form/Class"
                 onChange={handleChange}
-                className="w-full p-2 mb-4 border rounded"
+                className="w-full p-2 mb-4 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
                 required
               />
               <input
@@ -111,7 +130,7 @@ function LoginSignUp() {
                 name="preferences"
                 placeholder="Learning Preferences"
                 onChange={handleChange}
-                className="w-full p-2 mb-4 border rounded"
+                className="w-full p-2 mb-4 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
                 required
               />
             </>
@@ -121,7 +140,7 @@ function LoginSignUp() {
             name="email"
             placeholder="Email"
             onChange={handleChange}
-            className="w-full p-2 mb-4 border rounded"
+            className="w-full p-2 mb-4 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
             required
           />
           <input
@@ -129,15 +148,17 @@ function LoginSignUp() {
             name="password"
             placeholder="Password"
             onChange={handleChange}
-            className="w-full p-2 mb-6 border rounded"
+            className="w-full p-2 mb-6 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
             required
           />
-          <button
+          <motion.button
             type="submit"
-            className="w-full bg-blue-500 text-white p-2 rounded hover:bg-blue-600"
+            className="w-full bg-blue-500 text-white p-2 rounded hover:bg-blue-600 transition-colors"
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
           >
             {isLogin ? 'Login' : 'Sign Up'}
-          </button>
+          </motion.button>
         </form>
         <p className="mt-4 text-center">
           {isLogin ? "Don't have an account? " : "Already have an account? "}
@@ -148,9 +169,10 @@ function LoginSignUp() {
             {isLogin ? 'Sign Up' : 'Login'}
           </button>
         </p>
-      </div>
+      </motion.div>
     </div>
   );
 }
 
 export default LoginSignUp;
+

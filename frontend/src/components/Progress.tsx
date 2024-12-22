@@ -1,5 +1,7 @@
 import { useState, useEffect } from 'react';
+import { motion } from 'framer-motion';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import PageContainer from './PageContainer';
 
 interface ProgressData {
   subject: string;
@@ -43,40 +45,68 @@ function Progress() {
     fetchPerformanceData();
   }, []);
 
-  return (
-    <div>
-      <h2 className="text-2xl font-semibold mb-6">Your Progress</h2>
-      
-      <div className="mb-8">
-        <h3 className="text-xl font-semibold mb-4">Subject Progress</h3>
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-          {progressData.map((data) => (
-            <div key={data.subject} className="bg-white rounded-lg shadow-md p-6">
-              <h4 className="text-lg font-semibold mb-2">{data.subject}</h4>
-              <p className="text-sm text-gray-600 mb-2">Completion: {data.completionRate}%</p>
-              <p className="text-sm text-gray-600 mb-2">Average Grade: {data.averageGrade}%</p>
-              <p className="text-sm text-gray-600">Time Spent: {Math.floor(data.timeSpent / 60)} hours</p>
-            </div>
-          ))}
-        </div>
-      </div>
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.1
+      }
+    }
+  };
 
-      <div>
-        <h3 className="text-xl font-semibold mb-4">Performance Trend</h3>
-        <div className="bg-white rounded-lg shadow-md p-6" style={{ height: '400px' }}>
-          <ResponsiveContainer width="100%" height="100%">
-            <LineChart data={performanceData}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="date" />
-              <YAxis />
-              <Tooltip />
-              <Legend />
-              <Line type="monotone" dataKey="grade" stroke="#3182ce" activeDot={{ r: 8 }} />
-            </LineChart>
-          </ResponsiveContainer>
-        </div>
-      </div>
-    </div>
+  const itemVariants = {
+    hidden: { y: 20, opacity: 0 },
+    visible: {
+      y: 0,
+      opacity: 1,
+      transition: {
+        type: 'spring',
+        stiffness: 100
+      }
+    }
+  };
+
+  return (
+    <PageContainer>
+      <motion.div
+        variants={containerVariants}
+        initial="hidden"
+        animate="visible"
+      >
+        <h2 className="text-2xl font-semibold mb-6 text-blue-600">Your Progress</h2>
+        
+        <motion.div className="mb-8" variants={itemVariants}>
+          <h3 className="text-xl font-semibold mb-4 text-blue-800">Subject Progress</h3>
+          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+            {progressData.map((data) => (
+              <div key={data.subject} className="bg-white rounded-lg shadow-md p-6">
+                <h4 className="text-lg font-semibold mb-2 text-blue-700">{data.subject}</h4>
+                <p className="text-sm text-gray-600 mb-2">Completion: {data.completionRate}%</p>
+                <p className="text-sm text-gray-600 mb-2">Average Grade: {data.averageGrade}%</p>
+                <p className="text-sm text-gray-600">Time Spent: {Math.floor(data.timeSpent / 60)} hours</p>
+              </div>
+            ))}
+          </div>
+        </motion.div>
+
+        <motion.div variants={itemVariants}>
+          <h3 className="text-xl font-semibold mb-4 text-blue-800">Performance Trend</h3>
+          <div className="bg-white rounded-lg shadow-md p-6" style={{ height: '400px' }}>
+            <ResponsiveContainer width="100%" height="100%">
+              <LineChart data={performanceData}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="date" />
+                <YAxis />
+                <Tooltip />
+                <Legend />
+                <Line type="monotone" dataKey="grade" stroke="#3182ce" activeDot={{ r: 8 }} />
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
+        </motion.div>
+      </motion.div>
+    </PageContainer>
   );
 }
 

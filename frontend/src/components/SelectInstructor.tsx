@@ -1,4 +1,7 @@
 import { useState, useEffect } from 'react';
+import { motion } from 'framer-motion';
+import PageContainer from './PageContainer';
+import Card from './Card';
 
 interface Instructor {
   id: number;
@@ -12,9 +15,7 @@ function SelectInstructor() {
   const [selectedSubject, setSelectedSubject] = useState<string>('');
 
   useEffect(() => {
-    // Simulating API call to fetch instructors
     const fetchInstructors = async () => {
-      // In a real application, this would be an API call
       const mockInstructors: Instructor[] = [
         { id: 1, name: 'John Doe', subjects: ['Math', 'Physics'], rating: 4.8 },
         { id: 2, name: 'Jane Smith', subjects: ['English', 'Literature'], rating: 4.6 },
@@ -30,42 +31,87 @@ function SelectInstructor() {
     ? instructors.filter(instructor => instructor.subjects.includes(selectedSubject))
     : instructors;
 
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.1
+      }
+    }
+  };
+
+  const itemVariants = {
+    hidden: { y: 20, opacity: 0 },
+    visible: {
+      y: 0,
+      opacity: 1,
+      transition: {
+        type: 'spring',
+        stiffness: 100
+      }
+    }
+  };
+
   return (
-    <div>
-      <h2 className="text-2xl font-semibold mb-6">Select an Instructor</h2>
-      <div className="mb-4">
-        <label htmlFor="subject" className="block text-sm font-medium text-gray-700">Filter by Subject</label>
-        <select
-          id="subject"
-          value={selectedSubject}
-          onChange={(e) => setSelectedSubject(e.target.value)}
-          className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md"
-        >
-          <option value="">All Subjects</option>
-          <option value="Math">Math</option>
-          <option value="Physics">Physics</option>
-          <option value="English">English</option>
-          <option value="Literature">Literature</option>
-          <option value="History">History</option>
-          <option value="Geography">Geography</option>
-        </select>
-      </div>
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-        {filteredInstructors.map((instructor) => (
-          <div key={instructor.id} className="bg-white rounded-lg shadow-md p-6">
-            <h3 className="text-lg font-semibold mb-2">{instructor.name}</h3>
-            <p className="text-sm text-gray-600 mb-2">Subjects: {instructor.subjects.join(', ')}</p>
-            <div className="flex items-center mb-4">
-              <span className="text-yellow-400 mr-1">★</span>
-              <span>{instructor.rating.toFixed(1)}</span>
-            </div>
-            <button className="bg-blue-500 text-white py-2 px-4 rounded hover:bg-blue-600 transition-colors">
-              Select Instructor
-            </button>
+    <PageContainer>
+      <motion.div
+        className="space-y-8"
+        variants={containerVariants}
+        initial="hidden"
+        animate="visible"
+      >
+        <h2 className="text-2xl font-bold text-blue-600">Select an Instructor</h2>
+        
+        <Card>
+          <div className="p-6">
+            <label htmlFor="subject" className="block text-xl font-semibold text-blue-500 mb-4">Filter by Subject</label>
+            <select
+              id="subject"
+              value={selectedSubject}
+              onChange={(e) => setSelectedSubject(e.target.value)}
+              className="w-full px-4 py-3 text-gray-600 border-2 border-blue-200 rounded-xl focus:ring-2 focus:ring-blue-400 focus:border-transparent transition-all duration-200"
+            >
+              <option value="">All Subjects</option>
+              <option value="Math">Math</option>
+              <option value="Physics">Physics</option>
+              <option value="English">English</option>
+              <option value="Literature">Literature</option>
+              <option value="History">History</option>
+              <option value="Geography">Geography</option>
+            </select>
           </div>
-        ))}
-      </div>
-    </div>
+        </Card>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {filteredInstructors.map((instructor) => (
+            <motion.div key={instructor.id} variants={itemVariants}>
+              <Card>
+                <div className="p-6">
+                  <h3 className="text-xl font-semibold text-blue-500 mb-4">{instructor.name}</h3>
+                  <div className="space-y-3">
+                    <p className="text-gray-600">
+                      {instructor.subjects.join(' • ')}
+                    </p>
+                    <div className="flex items-center">
+                      <span className="text-yellow-400 text-xl">★</span>
+                      <span className="ml-2 text-gray-600">{instructor.rating}</span>
+                    </div>
+                  </div>
+                  <motion.button
+                    className="mt-6 w-full px-6 py-3 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white font-semibold rounded-xl transition-all duration-200"
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                  >
+                    Select Instructor
+                  </motion.button>
+                </div>
+              </Card>
+            </motion.div>
+          ))}
+        </div>
+      </motion.div>
+    </PageContainer>
   );
 }
 

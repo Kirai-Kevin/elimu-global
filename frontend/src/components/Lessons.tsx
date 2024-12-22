@@ -1,4 +1,6 @@
 import { useState, useEffect } from 'react';
+import { motion } from 'framer-motion';
+import PageContainer from './PageContainer';
 
 interface Lesson {
   id: number;
@@ -26,31 +28,67 @@ function Lessons() {
     fetchLessons();
   }, []);
 
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.1
+      }
+    }
+  };
+
+  const itemVariants = {
+    hidden: { y: 20, opacity: 0 },
+    visible: {
+      y: 0,
+      opacity: 1,
+      transition: {
+        type: 'spring',
+        stiffness: 100
+      }
+    }
+  };
+
   return (
-    <div>
-      <h2 className="text-2xl font-semibold mb-6">Your Lessons</h2>
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-        {lessons.map((lesson) => (
-          <div key={lesson.id} className="bg-white rounded-lg shadow-md p-6">
-            <h3 className="text-lg font-semibold mb-2">{lesson.title}</h3>
-            <p className="text-sm text-gray-600 mb-4">Subject: {lesson.subject}</p>
-            <div className="mb-2">
-              <div className="text-sm font-medium text-gray-500 mb-1">Progress</div>
-              <div className="w-full bg-gray-200 rounded-full h-2.5">
-                <div
-                  className="bg-blue-600 h-2.5 rounded-full"
-                  style={{ width: `${lesson.progress}%` }}
-                ></div>
+    <PageContainer>
+      <motion.div
+        variants={containerVariants}
+        initial="hidden"
+        animate="visible"
+      >
+        <h2 className="text-2xl font-semibold mb-6 text-blue-600">Your Lessons</h2>
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+          {lessons.map((lesson) => (
+            <motion.div key={lesson.id} variants={itemVariants}>
+              <div className="bg-white rounded-lg shadow-md p-6">
+                <h3 className="text-lg font-semibold mb-2 text-blue-800">{lesson.title}</h3>
+                <p className="text-sm text-gray-600 mb-4">Subject: {lesson.subject}</p>
+                <div className="mb-2">
+                  <div className="text-sm font-medium text-gray-500 mb-1">Progress</div>
+                  <div className="w-full bg-gray-200 rounded-full h-2.5">
+                    <motion.div
+                      className="bg-blue-600 h-2.5 rounded-full"
+                      initial={{ width: 0 }}
+                      animate={{ width: `${lesson.progress}%` }}
+                      transition={{ duration: 1, ease: "easeOut" }}
+                    />
+                  </div>
+                </div>
+                <p className="text-sm text-right">{lesson.progress}% Complete</p>
+                <motion.button 
+                  className="mt-4 bg-blue-500 text-white py-2 px-4 rounded hover:bg-blue-600 transition-colors"
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                >
+                  {lesson.progress === 0 ? 'Start Lesson' : 'Continue Lesson'}
+                </motion.button>
               </div>
-            </div>
-            <p className="text-sm text-right">{lesson.progress}% Complete</p>
-            <button className="mt-4 bg-blue-500 text-white py-2 px-4 rounded hover:bg-blue-600 transition-colors">
-              {lesson.progress === 0 ? 'Start Lesson' : 'Continue Lesson'}
-            </button>
-          </div>
-        ))}
-      </div>
-    </div>
+            </motion.div>
+          ))}
+        </div>
+      </motion.div>
+    </PageContainer>
   );
 }
 

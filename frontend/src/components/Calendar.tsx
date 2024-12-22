@@ -1,7 +1,9 @@
 import { useState, useEffect } from 'react';
+import { motion } from 'framer-motion';
 import { Calendar as BigCalendar, momentLocalizer } from 'react-big-calendar';
 import moment from 'moment';
 import 'react-big-calendar/lib/css/react-big-calendar.css';
+import PageContainer from './PageContainer';
 
 moment.locale('en-GB');
 const localizer = momentLocalizer(moment);
@@ -78,19 +80,27 @@ function Calendar() {
   };
 
   return (
-    <div>
-      <h2 className="text-2xl font-semibold mb-6">Calendar</h2>
-      <div className="h-[600px]">
-        <BigCalendar
-          localizer={localizer}
-          events={events}
-          startAccessor="start"
-          endAccessor="end"
-          style={{ height: '100%' }}
-          eventPropGetter={eventStyleGetter}
-        />
-      </div>
-    </div>
+    <PageContainer>
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
+      >
+        <h2 className="text-2xl font-semibold mb-6 text-blue-600">Calendar</h2>
+        <div className="bg-white rounded-2xl shadow-lg p-6 border border-blue-100">
+          <div className="h-[600px]">
+            <BigCalendar
+              localizer={localizer}
+              events={events}
+              startAccessor="start"
+              endAccessor="end"
+              style={{ height: '100%' }}
+              eventPropGetter={eventStyleGetter}
+            />
+          </div>
+        </div>
+      </motion.div>
+    </PageContainer>
   );
 }
 

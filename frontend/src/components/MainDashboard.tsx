@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { motion } from 'framer-motion';
 import { config } from '../config/env';
 import PageContainer from './PageContainer';
 
@@ -65,62 +66,117 @@ function MainDashboard() {
     fetchRecommendations();
   }, []);
 
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.1
+      }
+    }
+  };
+
+  const itemVariants = {
+    hidden: { y: 20, opacity: 0 },
+    visible: {
+      y: 0,
+      opacity: 1,
+      transition: {
+        type: 'spring',
+        stiffness: 100
+      }
+    }
+  };
+
   return (
     <PageContainer>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 h-full">
+      <motion.div 
+        className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6 h-full"
+        variants={containerVariants}
+        initial="hidden"
+        animate="visible"
+      >
         {/* Recent Lessons */}
-        <div className="bg-white rounded-lg shadow-sm p-6 border border-gray-100">
-          <h2 className="text-xl font-semibold text-gray-800 mb-4">Recent Lessons</h2>
+        <motion.div 
+          className="bg-white rounded-2xl shadow-lg p-6 border border-blue-100 overflow-hidden"
+          variants={itemVariants}
+        >
+          <h2 className="text-2xl font-bold text-blue-600 mb-6">Recent Lessons</h2>
           <div className="space-y-4">
             {lessons.map((lesson) => (
-              <div key={lesson.id} className="p-4 bg-gray-50 rounded-lg">
-                <h3 className="font-medium text-gray-800">{lesson.title}</h3>
+              <motion.div 
+                key={lesson.id} 
+                className="p-4 bg-blue-50 rounded-xl transition-all duration-300 hover:shadow-md"
+                whileHover={{ scale: 1.02 }}
+              >
+                <h3 className="font-semibold text-blue-800">{lesson.title}</h3>
                 <div className="mt-2 flex items-center">
-                  <div className="flex-1 bg-gray-200 rounded-full h-2">
-                    <div
+                  <div className="flex-1 bg-blue-200 rounded-full h-2 overflow-hidden">
+                    <motion.div
                       className="bg-blue-600 h-2 rounded-full"
-                      style={{ width: `${lesson.progress}%` }}
+                      initial={{ width: 0 }}
+                      animate={{ width: `${lesson.progress}%` }}
+                      transition={{ duration: 1, ease: "easeOut" }}
                     />
                   </div>
-                  <span className="ml-2 text-sm text-gray-600">{lesson.progress}%</span>
+                  <span className="ml-2 text-sm text-blue-600 font-medium">{lesson.progress}%</span>
                 </div>
-                <div className="mt-2 text-sm text-gray-600">
+                <div className="mt-2 text-sm text-blue-600">
                   Time spent: {lesson.timeSpent} minutes
                 </div>
                 {lesson.grade && (
-                  <div className="mt-1 text-sm text-green-600">
+                  <div className="mt-1 text-sm text-green-600 font-semibold">
                     Grade: {lesson.grade}%
                   </div>
                 )}
-              </div>
+              </motion.div>
             ))}
           </div>
-        </div>
+        </motion.div>
 
         {/* Progress Overview */}
-        <div className="bg-white rounded-lg shadow-sm p-6 border border-gray-100">
-          <h2 className="text-xl font-semibold text-gray-800 mb-4">Progress Overview</h2>
+        <motion.div 
+          className="bg-white rounded-2xl shadow-lg p-6 border border-blue-100"
+          variants={itemVariants}
+        >
+          <h2 className="text-2xl font-bold text-blue-600 mb-6">Progress Overview</h2>
           {/* Add your progress charts/stats here */}
-        </div>
+        </motion.div>
 
         {/* Upcoming Classes */}
-        <div className="bg-white rounded-lg shadow-sm p-6 border border-gray-100">
-          <h2 className="text-xl font-semibold text-gray-800 mb-4">Upcoming Classes</h2>
+        <motion.div 
+          className="bg-white rounded-2xl shadow-lg p-6 border border-blue-100"
+          variants={itemVariants}
+        >
+          <h2 className="text-2xl font-bold text-blue-600 mb-6">Upcoming Classes</h2>
           {/* Add your upcoming classes list here */}
-        </div>
+        </motion.div>
 
         {/* AI Recommendations */}
-        <div className="bg-white rounded-lg shadow-sm p-6 border border-gray-100">
-          <h2 className="text-xl font-semibold text-gray-800 mb-4">AI Recommendations</h2>
-          <ul className="list-disc list-inside">
+        <motion.div 
+          className="bg-white rounded-2xl shadow-lg p-6 border border-blue-100"
+          variants={itemVariants}
+        >
+          <h2 className="text-2xl font-bold text-blue-600 mb-6">AI Recommendations</h2>
+          <ul className="space-y-2">
             {recommendations.map((rec, index) => (
-              <li key={index} className="mb-2">{rec}</li>
+              <motion.li 
+                key={index} 
+                className="flex items-start"
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: index * 0.2 }}
+              >
+                <span className="text-blue-500 mr-2">•</span>
+                <span className="text-blue-800">{rec}</span>
+              </motion.li>
             ))}
           </ul>
-        </div>
-      </div>
+        </motion.div>
+      </motion.div>
     </PageContainer>
   );
 }
 
 export default MainDashboard;
+

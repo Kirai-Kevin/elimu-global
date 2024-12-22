@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link, Outlet, useLocation } from 'react-router-dom';
+import { motion, AnimatePresence } from 'framer-motion';
 import { HomeIcon, UserIcon, AwardIcon, VideoIcon, BookOpenIcon, CalendarIcon, FolderIcon, LibraryIcon, BarChartIcon, MoreHorizontalIcon, MenuIcon, XIcon } from 'lucide-react';
 import ChatBot from './ChatBot';
 
@@ -28,97 +29,106 @@ function Layout() {
       setIsMobile(newIsMobile);
       if (!newIsMobile) {
         setSidebarOpen(true);
+      } else {
+        setSidebarOpen(false);
       }
     };
+
+    // Initial check
+    handleResize();
 
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  useEffect(() => {
-    if (isMobile) {
-      setSidebarOpen(false);
-    }
-  }, [location, isMobile]);
+  const sidebarVariants = {
+    open: { x: 0, display: 'block' },
+    closed: { x: isMobile ? '-100%' : 0, display: isMobile ? 'none' : 'block' },
+  };
 
   return (
-    <div className="flex h-screen overflow-hidden bg-white">
-      {/* Overlay for mobile only */}
-      {isMobile && sidebarOpen && (
-        <div
-          className="fixed inset-0 bg-black bg-opacity-50 z-20 transition-opacity duration-300"
-          onClick={() => setSidebarOpen(false)}
-        />
-      )}
+    <div className="flex h-screen overflow-hidden bg-gradient-to-br from-blue-50 to-white">
+      {/* Mobile Overlay */}
+      <AnimatePresence>
+        {isMobile && sidebarOpen && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.3 }}
+            className="fixed inset-0 bg-black/20 backdrop-blur-sm z-20"
+            onClick={() => setSidebarOpen(false)}
+          />
+        )}
+      </AnimatePresence>
 
       {/* Sidebar */}
-      <aside
-        className={`${
-          sidebarOpen ? 'translate-x-0' : '-translate-x-full'
-        } fixed md:relative md:translate-x-0 z-30 w-64 h-full transition-transform duration-300 ease-in-out bg-white border-r border-gray-200`}
+      <motion.aside
+        className={`${isMobile ? 'fixed' : 'sticky top-0'} z-30 w-64 h-full bg-gradient-to-b from-blue-600 to-blue-700 text-white overflow-hidden`}
+        variants={sidebarVariants}
+        initial={isMobile ? 'closed' : 'open'}
+        animate={sidebarOpen ? 'open' : 'closed'}
+        transition={{ type: 'spring', stiffness: 300, damping: 30 }}
       >
         <div className="flex flex-col h-full">
           {/* Logo */}
-          <div className="flex items-center justify-between h-16 px-4 border-b border-gray-200">
-            <span className="text-xl font-semibold text-blue-600">Elimu Global</span>
+          <div className="flex items-center justify-between h-16 px-6 bg-blue-700/50">
+            <span className="text-2xl font-bold">Elimu Global</span>
             {isMobile && (
-              <button onClick={() => setSidebarOpen(false)} className="p-2 rounded-lg hover:bg-gray-100">
-                <XIcon className="w-6 h-6 text-gray-600" />
+              <button onClick={() => setSidebarOpen(false)} className="p-2 hover:bg-blue-600/50 rounded-lg transition-colors">
+                <XIcon className="w-6 h-6" />
               </button>
             )}
           </div>
 
           {/* Navigation */}
-          <nav className="flex-1 px-2 py-4 space-y-1 overflow-y-auto">
+          <nav className="flex-1 px-4 py-6 space-y-2 overflow-y-auto">
             {sidebarItems.map((item) => {
               const isActive = location.pathname === item.path;
               return (
                 <Link
                   key={item.name}
                   to={item.path}
-                  className={`flex items-center px-4 py-3 text-sm rounded-lg transition-colors ${
+                  className={`flex items-center px-4 py-3 text-sm rounded-xl transition-all duration-200 ${
                     isActive
-                      ? 'bg-blue-50 text-blue-600'
-                      : 'text-gray-600 hover:bg-gray-50 hover:text-blue-600'
+                      ? 'bg-white/20 text-white font-semibold'
+                      : 'text-blue-100 hover:bg-white/10'
                   }`}
                 >
-                  <item.icon className={`w-5 h-5 mr-3 ${isActive ? 'text-blue-600' : 'text-gray-400'}`} />
+                  <item.icon className="w-5 h-5 mr-3" />
                   {item.name}
                 </Link>
               );
             })}
           </nav>
         </div>
-      </aside>
+      </motion.aside>
 
       {/* Main Content */}
-      <main className="flex-1 flex flex-col min-w-0 overflow-hidden">
+      <main className="flex-1 flex flex-col min-w-0 overflow-hidden bg-gradient-to-br from-blue-50 to-white">
         {/* Header */}
-        <header className="h-16 border-b border-gray-200 bg-white">
-          <div className="flex items-center h-full px-4">
+        <header className="h-16 bg-white/80 backdrop-blur-sm border-b border-blue-100">
+          <div className="flex items-center h-full px-6">
             {isMobile && (
               <button
                 onClick={() => setSidebarOpen(true)}
-                className="p-2 mr-2 rounded-lg hover:bg-gray-100"
+                className="p-2 mr-4 hover:bg-blue-50 rounded-lg transition-colors"
               >
-                <MenuIcon className="w-6 h-6 text-gray-600" />
+                <MenuIcon className="w-6 h-6 text-blue-600" />
               </button>
             )}
-            <h1 className="text-xl font-semibold text-gray-800">
+            <h1 className="text-2xl font-bold text-blue-600">
               {sidebarItems.find((item) => item.path === location.pathname)?.name || 'Dashboard'}
             </h1>
           </div>
         </header>
 
         {/* Page Content */}
-        <div className="flex-1 overflow-auto bg-gray-50 p-6 min-h-[calc(100vh-4rem)]">
-          <div className="h-full">
-            <Outlet />
-          </div>
+        <div className="flex-1 overflow-auto">
+          <Outlet />
         </div>
       </main>
 
-      {/* ChatBot */}
       <ChatBot />
     </div>
   );

@@ -13,6 +13,10 @@ import Materials from './components/Materials';
 import Library from './components/Library';
 import Progress from './components/Progress';
 import MoreOptions from './components/MoreOptions';
+import AccountSettings from './components/AccountSettings';
+import NotificationPreferences from './components/NotificationPreferences';
+import PrivacySettings from './components/PrivacySettings';
+import LanguagePreferences from './components/LanguagePreferences';
 
 function App() {
   return (
@@ -32,6 +36,10 @@ function App() {
           <Route path="library" element={<Library />} />
           <Route path="progress" element={<Progress />} />
           <Route path="more" element={<MoreOptions />} />
+          <Route path="account-settings" element={<AccountSettings />} />
+          <Route path="notification-preferences" element={<NotificationPreferences />} />
+          <Route path="privacy-settings" element={<PrivacySettings />} />
+          <Route path="language-preferences" element={<LanguagePreferences />} />
         </Route>
       </Routes>
     </Router>
@@ -39,4 +47,3 @@ function App() {
 }
 
 export default App;
-
