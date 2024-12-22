@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="100" height="100" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Pencil Body -->
+  <path d="M20 80 L70 30 L80 40 L30 90 Z" fill="#FFA000"/>
+  
+  <!-- Pencil Tip -->
+  <path d="M15 85 L20 80 L30 90 L25 95 Z" fill="#424242"/>
+  
+  <!-- Eraser -->
+  <rect x="70" y="30" width="15" height="15" rx="2" fill="#E57373"/>
+</svg>

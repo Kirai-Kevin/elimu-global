@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="800" height="600" viewBox="0 0 800 600" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background Elements -->
+  <circle cx="400" cy="300" r="250" fill="#E3F2FD" opacity="0.5"/>
+  <circle cx="400" cy="300" r="200" fill="#BBDEFB" opacity="0.3"/>
+  
+  <!-- Student Figure -->
+  <path d="M350 200 Q400 150 450 200 Q500 250 450 300 Q400 350 350 300 Q300 250 350 200" fill="#2196F3"/>
+  <circle cx="400" cy="180" r="40" fill="#1976D2"/>
+  
+  <!-- Book Stack -->
+  <rect x="250" y="350" width="120" height="20" rx="5" fill="#1565C0"/>
+  <rect x="260" y="330" width="120" height="20" rx="5" fill="#1976D2"/>
+  <rect x="270" y="310" width="120" height="20" rx="5" fill="#2196F3"/>
+  
+  <!-- Floating Elements -->
+  <path d="M600 150 L620 130 L640 150 L620 170 Z" fill="#2196F3"/>
+  <path d="M180 400 L200 380 L220 400 L200 420 Z" fill="#1976D2"/>
+  <circle cx="550" cy="450" r="15" fill="#BBDEFB"/>
+  <circle cx="200" cy="200" r="10" fill="#E3F2FD"/>
+  
+  <!-- Decorative Lines -->
+  <path d="M100 100 Q300 50 500 100" stroke="#2196F3" stroke-width="2" fill="none"/>
+  <path d="M100 500 Q300 550 500 500" stroke="#1976D2" stroke-width="2" fill="none"/>
+</svg>
