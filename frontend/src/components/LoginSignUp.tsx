@@ -22,8 +22,9 @@ function LoginSignUp() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Here you would typically send the data to your backend
-    console.log(formData);
+    
+    // Store user data in localStorage
+    localStorage.setItem('user', JSON.stringify(formData));
     
     // Simulate sending data to recommendation AI
     try {
@@ -53,7 +54,8 @@ function LoginSignUp() {
       }
 
       const data = await response.json();
-      console.log('AI Recommendations:', data.choices[0].message.content);
+      // Store AI recommendations for use in the dashboard
+      localStorage.setItem('recommendations', data.choices[0].message.content);
     } catch (error) {
       console.error('Error getting AI recommendations:', error);
     }
@@ -175,4 +177,3 @@ function LoginSignUp() {
 }
 
 export default LoginSignUp;
-
