@@ -54,3 +54,36 @@ pids
 
 # Diagnostic reports (https://nodejs.org/api/report.html)
 report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
+
+# uploads directory
+/uploads
+/uploads/*
+
+# environment variables
+.env*
+!.env.example
+
+# database
+*.db
+*.sqlite
+*.sqlite3
+
+# Prisma
+/prisma/migrations/
+prisma/.env
+
+# Logs and debugging
+debug.log*
+*.debug
+
+# Test coverage
+coverage/
+.coverage
+coverage.*
+
+# Cache directories
+.cache/
+.temp/
+.tmp/
+dist/
+build/

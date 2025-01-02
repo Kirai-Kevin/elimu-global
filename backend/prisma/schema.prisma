@@ -1,0 +1,152 @@
+// This is your Prisma schema file
+datasource db {
+  provider = "mongodb"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model User {
+  id                String      @id @default(auto()) @map("_id") @db.ObjectId
+  email             String      @unique
+  password          String
+  name              String
+  role              String      @default("student")
+  selectedPlan      String?
+  profileImage      String?
+  enrolledCourseIds String[]    @db.ObjectId
+  teachingCourseIds String[]    @db.ObjectId
+  assignmentIds     String[]    @db.ObjectId
+  achievementIds    String[]    @db.ObjectId
+  lessonIds         String[]    @db.ObjectId
+  scheduleIds       String[]    @db.ObjectId
+  notifications     Notification[]
+  createdAt         DateTime    @default(now())
+  updatedAt         DateTime    @updatedAt
+
+  enrolledCourses   Course[]    @relation("EnrolledCourses", fields: [enrolledCourseIds], references: [id])
+  teachingCourses   Course[]    @relation("TeachingCourses", fields: [teachingCourseIds], references: [id])
+  assignments       Assignment[] @relation("UserAssignments", fields: [assignmentIds], references: [id])
+  achievements      Achievement[] @relation("UserAchievements", fields: [achievementIds], references: [id])
+  lessons           Lesson[]    @relation("UserLessons", fields: [lessonIds], references: [id])
+  schedules         Schedule[]  @relation("UserSchedules", fields: [scheduleIds], references: [id])
+}
+
+model Course {
+  id              String      @id @default(auto()) @map("_id") @db.ObjectId
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+  title           String
+  description     String?
+  content         String?
+  thumbnail       String?
+  videoUrl        String?
+  duration        Int?
+  level           String?
+  category        String?
+  tags            String[]    @default([])
+  rating          Float?
+  published       Boolean     @default(false)
+  studentIds      String[]    @default([])
+  instructorIds   String[]    @default([])
+  
+  // Relations
+  instructors     User[]      @relation("InstructorCourses", fields: [instructorIds], references: [id])
+  students        User[]      @relation("EnrolledCourses", fields: [studentIds], references: [id])
+  materials       Material[]
+  lessons         Lesson[]
+  assignments     Assignment[]
+  schedules       Schedule[]
+}
+
+model Material {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  title     String
+  content   String
+  fileUrl   String?
+  type      String   // "document", "video", "quiz", etc.
+  courseId  String   @db.ObjectId
+  course    Course   @relation(fields: [courseId], references: [id])
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Lesson {
+  id          String    @id @default(auto()) @map("_id") @db.ObjectId
+  title       String
+  content     String
+  courseId    String    @db.ObjectId
+  course      Course    @relation(fields: [courseId], references: [id])
+  studentIds  String[]  @db.ObjectId
+  students    User[]    @relation("UserLessons", fields: [studentIds], references: [id])
+  schedule    Schedule?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
+model Assignment {
+  id          String    @id @default(auto()) @map("_id") @db.ObjectId
+  title       String
+  description String
+  dueDate     DateTime
+  courseId    String    @db.ObjectId
+  course      Course    @relation(fields: [courseId], references: [id])
+  studentIds  String[]  @db.ObjectId
+  students    User[]    @relation("UserAssignments", fields: [studentIds], references: [id])
+  submissions Submission[]
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
+model Submission {
+  id           String    @id @default(auto()) @map("_id") @db.ObjectId
+  content      String
+  fileUrl      String?
+  grade        Float?
+  feedback     String?
+  assignmentId String    @db.ObjectId
+  assignment   Assignment @relation(fields: [assignmentId], references: [id])
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+}
+
+model Achievement {
+  id          String    @id @default(auto()) @map("_id") @db.ObjectId
+  title       String
+  description String
+  type        String    // "badge", "certificate", etc.
+  imageUrl    String?
+  userIds     String[]  @db.ObjectId
+  users       User[]    @relation("UserAchievements", fields: [userIds], references: [id])
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
+model Schedule {
+  id          String    @id @default(auto()) @map("_id") @db.ObjectId
+  title       String
+  startTime   DateTime
+  endTime     DateTime
+  courseId    String?   @db.ObjectId
+  course      Course?   @relation(fields: [courseId], references: [id])
+  lessonId    String?   @unique @db.ObjectId
+  lesson      Lesson?   @relation(fields: [lessonId], references: [id])
+  userIds     String[]  @db.ObjectId
+  users       User[]    @relation("UserSchedules", fields: [userIds], references: [id])
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
+model Notification {
+  id          String    @id @default(auto()) @map("_id") @db.ObjectId
+  title       String
+  content     String
+  type        String    // "assignment", "lesson", "achievement", etc.
+  read        Boolean   @default(false)
+  userId      String    @db.ObjectId
+  user        User      @relation(fields: [userId], references: [id])
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}

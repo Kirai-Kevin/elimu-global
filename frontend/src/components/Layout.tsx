@@ -37,9 +37,7 @@ function Layout() {
       }
     };
 
-    // Initial check
     handleResize();
-
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
@@ -50,14 +48,12 @@ function Layout() {
   };
 
   const handleLogout = () => {
-    // Clear user data from localStorage
     localStorage.clear();
-    // Redirect to login page
     navigate('/login');
   };
 
   return (
-    <div className="flex h-screen overflow-hidden bg-gradient-to-br from-blue-50 to-white">
+    <div className="flex h-screen bg-gradient-to-br from-blue-50 to-white">
       {/* Mobile Overlay */}
       <AnimatePresence>
         {isMobile && sidebarOpen && (
@@ -74,57 +70,57 @@ function Layout() {
 
       {/* Sidebar */}
       <motion.aside
-        className={`${isMobile ? 'fixed' : 'sticky top-0'} z-30 w-64 h-full bg-gradient-to-b from-blue-600 to-blue-700 text-white overflow-hidden`}
+        className={`${
+          isMobile ? 'fixed' : 'sticky top-0'
+        } z-30 w-64 h-screen bg-gradient-to-b from-blue-600 to-blue-700 text-white overflow-hidden`}
         variants={sidebarVariants}
         initial={isMobile ? 'closed' : 'open'}
         animate={sidebarOpen ? 'open' : 'closed'}
         transition={{ type: 'spring', stiffness: 300, damping: 30 }}
       >
-        <div className="flex flex-col h-full">
-          {/* Logo */}
-          <div className="flex items-center justify-between h-16 px-6 bg-blue-700/50">
-            <span className="text-2xl font-bold">Elimu Global</span>
-            {isMobile && (
-              <button onClick={() => setSidebarOpen(false)} className="p-2 hover:bg-blue-600/50 rounded-lg transition-colors">
-                <XIcon className="w-6 h-6" />
-              </button>
-            )}
-          </div>
-
-          {/* Navigation */}
-          <nav className="flex-1 px-4 py-6 space-y-2 overflow-y-auto">
-            {sidebarItems.map((item) => {
-              const isActive = location.pathname === item.path;
-              return (
-                <Link
-                  key={item.name}
-                  to={item.path}
-                  className={`flex items-center px-4 py-3 text-sm rounded-xl transition-all duration-200 ${
-                    isActive
-                      ? 'bg-white/20 text-white font-semibold'
-                      : 'text-blue-100 hover:bg-white/10'
-                  }`}
-                >
-                  <item.icon className="w-5 h-5 mr-3" />
-                  {item.name}
-                </Link>
-              );
-            })}
-            <button
-              onClick={handleLogout}
-              className="flex items-center w-full px-4 py-3 text-red-600 hover:bg-red-50 transition-colors"
-            >
-              <LogOut className="w-5 h-5 mr-3" />
-              <span>Logout</span>
+        {/* Logo */}
+        <div className="flex-shrink-0 flex items-center justify-between h-16 px-6 bg-blue-700/50">
+          <span className="text-2xl font-bold">Elimu Global</span>
+          {isMobile && (
+            <button onClick={() => setSidebarOpen(false)} className="p-2 hover:bg-blue-600/50 rounded-lg transition-colors">
+              <XIcon className="w-6 h-6" />
             </button>
-          </nav>
+          )}
         </div>
+
+        {/* Navigation */}
+        <nav className="h-[calc(100vh-4rem)] px-4 py-6 space-y-2 overflow-y-auto scrollbar-thin scrollbar-thumb-blue-400 scrollbar-track-transparent">
+          {sidebarItems.map((item) => {
+            const isActive = location.pathname === item.path;
+            return (
+              <Link
+                key={item.name}
+                to={item.path}
+                className={`flex items-center px-4 py-3 text-sm rounded-xl transition-all duration-200 ${
+                  isActive
+                    ? 'bg-white/20 text-white font-semibold'
+                    : 'text-blue-100 hover:bg-white/10'
+                }`}
+              >
+                <item.icon className="w-5 h-5 mr-3" />
+                {item.name}
+              </Link>
+            );
+          })}
+          <button
+            onClick={handleLogout}
+            className="flex items-center w-full px-4 py-3 text-red-100 hover:bg-red-500/20 rounded-xl transition-colors"
+          >
+            <LogOut className="w-5 h-5 mr-3" />
+            <span>Logout</span>
+          </button>
+        </nav>
       </motion.aside>
 
       {/* Main Content */}
-      <main className="flex-1 flex flex-col min-w-0 overflow-hidden bg-gradient-to-br from-blue-50 to-white">
+      <div className="flex-1 flex flex-col min-w-0">
         {/* Header */}
-        <header className="h-16 bg-white/80 backdrop-blur-sm border-b border-blue-100">
+        <header className="sticky top-0 z-10 h-16 bg-white/80 backdrop-blur-sm border-b border-blue-100">
           <div className="flex items-center h-full px-6">
             {isMobile && (
               <button
@@ -141,10 +137,21 @@ function Layout() {
         </header>
 
         {/* Page Content */}
-        <div className="flex-1 overflow-auto">
-          <Outlet />
+        <div className="flex-1 overflow-y-auto">
+          <AnimatePresence mode="wait">
+            <motion.div 
+              key={location.pathname} 
+              initial={{ opacity: 0 }} 
+              animate={{ opacity: 1 }} 
+              exit={{ opacity: 0 }} 
+              transition={{ duration: 0.3 }}
+              className="min-h-full p-6"
+            >
+              <Outlet />
+            </motion.div>
+          </AnimatePresence>
         </div>
-      </main>
+      </div>
 
       <ChatBot />
     </div>

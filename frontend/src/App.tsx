@@ -1,4 +1,5 @@
 import { BrowserRouter as Router, Route, Routes, Navigate, useLocation } from 'react-router-dom';
+import { AnimatePresence } from 'framer-motion';
 import Layout from './components/Layout';
 import LoginSignUp from './components/LoginSignUp';
 import AllStudentsDashboard from './components/AllStudentsDashboard';
@@ -19,6 +20,7 @@ import PrivacySettings from './components/PrivacySettings';
 import LanguagePreferences from './components/LanguagePreferences';
 import Schedule from './components/Schedule';
 import Resources from './components/Resources';
+import PageTransition from './components/PageTransition';
 
 // Auth checks
 const isAuthenticated = () => {
@@ -61,17 +63,22 @@ const AuthRoute = ({ children }: { children: React.ReactNode }) => {
   return <>{children}</>;
 };
 
-function App() {
+// We need this wrapper to access location for AnimatePresence
+function AnimatedRoutes() {
+  const location = useLocation();
+
   return (
-    <Router>
-      <Routes>
+    <AnimatePresence mode="wait">
+      <Routes location={location} key={location.pathname}>
         {/* Public Routes */}
         <Route path="/" element={<Navigate to="/login" replace />} />
         <Route 
           path="/login" 
           element={
             <AuthRoute>
-              <LoginSignUp />
+              <PageTransition>
+                <LoginSignUp />
+              </PageTransition>
             </AuthRoute>
           } 
         />
@@ -81,7 +88,9 @@ function App() {
           path="/all-students" 
           element={
             <ProtectedRoute>
-              <AllStudentsDashboard />
+              <PageTransition>
+                <AllStudentsDashboard />
+              </PageTransition>
             </ProtectedRoute>
           } 
         />
@@ -91,7 +100,9 @@ function App() {
           path="/dashboard"
           element={
             <ProtectedRoute>
-              <Layout />
+              <PageTransition>
+                <Layout />
+              </PageTransition>
             </ProtectedRoute>
           }
         >
@@ -117,6 +128,14 @@ function App() {
         {/* Catch all route - redirect to login */}
         <Route path="*" element={<Navigate to="/login" replace />} />
       </Routes>
+    </AnimatePresence>
+  );
+}
+
+function App() {
+  return (
+    <Router>
+      <AnimatedRoutes />
     </Router>
   );
 }
