@@ -1,49 +1,29 @@
-import {
-  ExceptionFilter,
-  Catch,
-  ArgumentsHost,
-  HttpException,
-  HttpStatus,
-} from '@nestjs/common';
-import { Request, Response } from 'express';
-import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library';
+import { ExceptionFilter, Catch, ArgumentsHost, HttpException, HttpStatus } from '@nestjs/common';
+import { HttpAdapterHost } from '@nestjs/core';
 
 @Catch()
 export class GlobalExceptionFilter implements ExceptionFilter {
+  constructor(private readonly httpAdapterHost: HttpAdapterHost) {}
+
   catch(exception: unknown, host: ArgumentsHost) {
+    const { httpAdapter } = this.httpAdapterHost;
     const ctx = host.switchToHttp();
-    const response = ctx.getResponse<Response>();
-    const request = ctx.getRequest<Request>();
 
     console.error('Exception caught:', exception);
 
-    let status = HttpStatus.INTERNAL_SERVER_ERROR;
-    let message = 'Internal server error';
+    const httpStatus = 
+      exception instanceof HttpException
+        ? exception.getStatus()
+        : HttpStatus.INTERNAL_SERVER_ERROR;
 
-    if (exception instanceof HttpException) {
-      status = exception.getStatus();
-      message = exception.message;
-    } else if (exception instanceof PrismaClientKnownRequestError) {
-      switch (exception.code) {
-        case 'P2002':
-          status = HttpStatus.CONFLICT;
-          message = 'Unique constraint violation';
-          break;
-        case 'P2025':
-          status = HttpStatus.NOT_FOUND;
-          message = 'Record not found';
-          break;
-        default:
-          message = 'Database error';
-      }
-    }
-
-    response.status(status).json({
-      statusCode: status,
+    const responseBody = {
+      statusCode: httpStatus,
       timestamp: new Date().toISOString(),
-      path: request.url,
-      message,
+      path: httpAdapter.getRequestUrl(ctx.getRequest()),
+      message: exception instanceof Error ? exception.message : 'Internal Server Error',
       error: process.env.NODE_ENV === 'development' ? exception : undefined,
-    });
+    };
+
+    httpAdapter.reply(ctx.getResponse(), responseBody, httpStatus);
   }
 }

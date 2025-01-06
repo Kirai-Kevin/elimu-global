@@ -5,6 +5,7 @@ import { ValidationPipe } from '@nestjs/common';
 import { NestExpressApplication } from '@nestjs/platform-express';
 import { join } from 'path';
 import * as fs from 'fs';
+import { HttpAdapterHost } from '@nestjs/core';
 
 async function bootstrap() {
   // Create uploads directory if it doesn't exist
@@ -32,7 +33,8 @@ async function bootstrap() {
   }));
   
   // Global exception filter
-  app.useGlobalFilters(new GlobalExceptionFilter());
+  const httpAdapterHost = app.get(HttpAdapterHost);
+  app.useGlobalFilters(new GlobalExceptionFilter(httpAdapterHost));
   
   await app.listen(3000);
 }

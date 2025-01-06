@@ -1,73 +1,63 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { PrismaService } from '../prisma/prisma.service';
+import { InjectModel } from '@nestjs/mongoose';
+import { Model, Types } from 'mongoose';
+import { Lesson } from './schemas/lesson.schema';
 
 @Injectable()
 export class LessonsService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    @InjectModel(Lesson.name) private lessonModel: Model<Lesson>
+  ) {}
 
   async create(data: {
     title: string;
-    content: string;
+    description?: string;
     courseId: string;
+    content?: string;
+    videoUrl?: string;
   }) {
-    return this.prisma.lesson.create({
-      data,
-      include: {
-        course: true,
-        schedule: true,
-        students: true,
-      },
+    const lesson = new this.lessonModel({
+      ...data,
+      courseId: new Types.ObjectId(data.courseId)
     });
+    return await lesson.save();
   }
 
   async findAll(courseId?: string) {
-    const where = courseId ? { courseId } : {};
-    return this.prisma.lesson.findMany({
-      where,
-      include: {
-        course: true,
-        schedule: true,
-        students: true,
-      },
-    });
+    const filter = courseId ? { courseId: new Types.ObjectId(courseId) } : {};
+    return this.lessonModel.find(filter).populate('courseId').populate('schedule');
   }
 
   async findOne(id: string) {
-    const lesson = await this.prisma.lesson.findUnique({
-      where: { id },
-      include: {
-        course: true,
-        schedule: true,
-        students: true,
-      },
-    });
-
+    const lesson = await this.lessonModel.findById(id).populate('courseId').populate('schedule');
     if (!lesson) {
       throw new NotFoundException(`Lesson with ID ${id} not found`);
     }
-
     return lesson;
   }
 
   async update(id: string, data: {
     title?: string;
+    description?: string;
     content?: string;
+    videoUrl?: string;
   }) {
-    return this.prisma.lesson.update({
-      where: { id },
-      data,
-      include: {
-        course: true,
-        schedule: true,
-        students: true,
-      },
-    });
+    const lesson = await this.lessonModel.findByIdAndUpdate(id, data, { new: true })
+      .populate('courseId')
+      .populate('schedule');
+    
+    if (!lesson) {
+      throw new NotFoundException(`Lesson with ID ${id} not found`);
+    }
+    return lesson;
   }
 
   async remove(id: string) {
-    return this.prisma.lesson.delete({
-      where: { id },
-    });
+    const result = await this.lessonModel.findByIdAndDelete(id);
+    if (!result) {
+      throw new NotFoundException(`Lesson with ID ${id} not found`);
+    }
+    return result;
   }
 
   async scheduleLesson(lessonId: string, data: {
@@ -75,71 +65,18 @@ export class LessonsService {
     startTime: Date;
     endTime: Date;
   }) {
-    return this.prisma.schedule.create({
-      data: {
-        ...data,
-        lesson: {
-          connect: { id: lessonId }
-        }
-      },
-      include: {
-        lesson: true,
-        users: true,
-      },
-    });
+    // TO DO: implement scheduleLesson using Mongoose
   }
 
   async enrollStudent(lessonId: string, studentId: string) {
-    return this.prisma.lesson.update({
-      where: { id: lessonId },
-      data: {
-        students: {
-          connect: { id: studentId }
-        }
-      },
-      include: {
-        students: true,
-        schedule: true,
-      },
-    });
+    // TO DO: implement enrollStudent using Mongoose
   }
 
   async getStudentLessons(studentId: string) {
-    return this.prisma.lesson.findMany({
-      where: {
-        students: {
-          some: { id: studentId }
-        }
-      },
-      include: {
-        course: true,
-        schedule: true,
-      },
-    });
+    // TO DO: implement getStudentLessons using Mongoose
   }
 
   async getUpcomingLessons(studentId: string) {
-    const now = new Date();
-    return this.prisma.lesson.findMany({
-      where: {
-        students: {
-          some: { id: studentId }
-        },
-        schedule: {
-          startTime: {
-            gte: now
-          }
-        }
-      },
-      include: {
-        course: true,
-        schedule: true,
-      },
-      orderBy: {
-        schedule: {
-          startTime: 'asc'
-        }
-      },
-    });
+    // TO DO: implement getUpcomingLessons using Mongoose
   }
 }

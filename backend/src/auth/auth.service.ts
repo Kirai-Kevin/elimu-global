@@ -1,19 +1,21 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
-import { PrismaService } from '../prisma/prisma.service';
+import { Injectable } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
+import { InjectModel } from '@nestjs/mongoose';
+import { User, UserDocument } from '../schemas/user.schema';
+import { Model } from 'mongoose';
 
 @Injectable()
 export class AuthService {
   constructor(
-    private prisma: PrismaService,
+    @InjectModel(User.name) private userModel: Model<UserDocument>,
     private jwtService: JwtService,
   ) {}
 
   async validateUser(email: string, password: string) {
-    const user = await this.prisma.user.findUnique({ where: { email } });
+    const user = await this.userModel.findOne({ email });
     if (user && (await bcrypt.compare(password, user.password))) {
-      const { password, ...result } = user;
+      const { password, ...result } = user.toObject();
       return result;
     }
     return null;
@@ -35,22 +37,13 @@ export class AuthService {
 
   async register(email: string, password: string, name: string) {
     const hashedPassword = await bcrypt.hash(password, 10);
-    const user = await this.prisma.user.create({
-      data: {
-        email,
-        password: hashedPassword,
-        name,
-      },
-    });
-
-    const { password: _, ...result } = user;
+    const createdUser = new this.userModel({ email, password: hashedPassword, name });
+    const user = await createdUser.save();
+    const { password: _password, ...result } = user.toObject();
     return result;
   }
 
   async updateSelectedPlan(userId: string, plan: string) {
-    return this.prisma.user.update({
-      where: { id: userId },
-      data: { selectedPlan: plan },
-    });
+    return this.userModel.findByIdAndUpdate(userId, { selectedPlan: plan }, { new: true }).lean();
   }
 }

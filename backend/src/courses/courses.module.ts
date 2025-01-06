@@ -1,12 +1,15 @@
 import { Module } from '@nestjs/common';
+import { MongooseModule } from '@nestjs/mongoose';
 import { CoursesService } from './courses.service';
 import { CoursesController } from './courses.controller';
-import { PrismaModule } from '../prisma/prisma.module';
+import { Course, CourseSchema } from './schemas/course.schema';
 import { MulterModule } from '@nestjs/platform-express';
 
 @Module({
   imports: [
-    PrismaModule,
+    MongooseModule.forFeature([
+      { name: Course.name, schema: CourseSchema }
+    ]),
     MulterModule.register({
       dest: './uploads/courses',
     })

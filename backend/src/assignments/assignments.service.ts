@@ -1,9 +1,15 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { PrismaService } from '../prisma/prisma.service';
+import { InjectModel } from '@nestjs/mongoose';
+import { Model, Types } from 'mongoose';
+import { Assignment } from './schemas/assignment.schema';
+import { Submission } from './schemas/submission.schema';
 
 @Injectable()
 export class AssignmentsService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    @InjectModel(Assignment.name) private assignmentModel: Model<Assignment>,
+    @InjectModel(Submission.name) private submissionModel: Model<Submission>,
+  ) {}
 
   async create(data: {
     title: string;
@@ -11,34 +17,26 @@ export class AssignmentsService {
     dueDate: Date;
     courseId: string;
   }) {
-    return this.prisma.assignment.create({
-      data,
-      include: {
-        course: true,
-        submissions: true,
-      },
+    const assignment = new this.assignmentModel({
+      ...data,
+      courseId: new Types.ObjectId(data.courseId),
     });
+    return await assignment.save();
   }
 
   async findAll(courseId?: string) {
-    const where = courseId ? { courseId } : {};
-    return this.prisma.assignment.findMany({
-      where,
-      include: {
-        course: true,
-        submissions: true,
-      },
-    });
+    const filter = courseId ? { courseId: new Types.ObjectId(courseId) } : {};
+    return this.assignmentModel
+      .find(filter)
+      .populate('courseId')
+      .populate('submissions');
   }
 
   async findOne(id: string) {
-    const assignment = await this.prisma.assignment.findUnique({
-      where: { id },
-      include: {
-        course: true,
-        submissions: true,
-      },
-    });
+    const assignment = await this.assignmentModel
+      .findById(id)
+      .populate('courseId')
+      .populate('submissions');
 
     if (!assignment) {
       throw new NotFoundException(`Assignment with ID ${id} not found`);
@@ -52,20 +50,24 @@ export class AssignmentsService {
     description?: string;
     dueDate?: Date;
   }) {
-    return this.prisma.assignment.update({
-      where: { id },
-      data,
-      include: {
-        course: true,
-        submissions: true,
-      },
-    });
+    const assignment = await this.assignmentModel
+      .findByIdAndUpdate(id, data, { new: true })
+      .populate('courseId')
+      .populate('submissions');
+
+    if (!assignment) {
+      throw new NotFoundException(`Assignment with ID ${id} not found`);
+    }
+
+    return assignment;
   }
 
   async remove(id: string) {
-    return this.prisma.assignment.delete({
-      where: { id },
-    });
+    const result = await this.assignmentModel.findByIdAndDelete(id);
+    if (!result) {
+      throw new NotFoundException(`Assignment with ID ${id} not found`);
+    }
+    return result;
   }
 
   async submitAssignment(data: {
@@ -73,48 +75,41 @@ export class AssignmentsService {
     fileUrl?: string;
     assignmentId: string;
   }) {
-    return this.prisma.submission.create({
-      data,
-      include: {
-        assignment: true,
-      },
+    const submission = new this.submissionModel({
+      ...data,
+      assignmentId: new Types.ObjectId(data.assignmentId),
     });
+    
+    const savedSubmission = await submission.save();
+    
+    // Update assignment's submissions
+    await this.assignmentModel.findByIdAndUpdate(
+      data.assignmentId, 
+      { $push: { submissions: savedSubmission._id } }
+    );
+
+    return savedSubmission;
   }
 
   async gradeSubmission(submissionId: string, data: {
     grade: number;
     feedback?: string;
   }) {
-    return this.prisma.submission.update({
-      where: { id: submissionId },
-      data,
-      include: {
-        assignment: true,
-      },
-    });
+    return this.submissionModel
+      .findByIdAndUpdate(submissionId, data, { new: true })
+      .populate('assignmentId');
   }
 
   async getSubmissions(assignmentId: string) {
-    return this.prisma.submission.findMany({
-      where: { assignmentId },
-      include: {
-        assignment: true,
-      },
-    });
+    return this.submissionModel
+      .find({ assignmentId: new Types.ObjectId(assignmentId) })
+      .populate('assignmentId');
   }
 
   async getStudentSubmissions(studentId: string) {
-    return this.prisma.submission.findMany({
-      where: {
-        assignment: {
-          students: {
-            some: { id: studentId }
-          }
-        }
-      },
-      include: {
-        assignment: true,
-      },
-    });
+    // Note: This might need adjustment based on your student model
+    return this.submissionModel
+      .find({ studentId: new Types.ObjectId(studentId) })
+      .populate('assignmentId');
   }
 }
