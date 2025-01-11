@@ -29,16 +29,13 @@ services:
     env: node
     nodeVersion: 18.x
     region: frankfurt
-    buildCommand: cd backend && npm install && npm run build
-    startCommand: cd backend && npm run start:prod
+    rootDir: backend
+    buildCommand: npm ci && npm run build
+    startCommand: npm run start:prod
     healthCheckPath: /api/health
     envVars:
       - key: NODE_ENV
         value: production
-      - key: DATABASE_URL
-        sync: false
-      - key: JWT_SECRET
-        sync: false
-      - key: GROQ_API_KEY
-        sync: false
+      - key: PORT
+        value: 3000
     autoDeploy: true

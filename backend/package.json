@@ -18,7 +18,7 @@
   },
   "scripts": {
     "prebuild": "rimraf dist",
-    "build": "npm install && nest build && node scripts/copy-pdf-worker.js",
+    "build": "nest build && node scripts/copy-pdf-worker.js",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
     "start": "nest start",
     "start:dev": "nest start --watch",
@@ -30,7 +30,7 @@
     "test:cov": "jest --coverage",
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
     "test:e2e": "jest --config ./test/jest-e2e.json",
-    "postinstall": "patch-package && npm run build"
+    "postinstall": "patch-package"
   },
   "dependencies": {
     "@nestjs/axios": "^3.1.3",
