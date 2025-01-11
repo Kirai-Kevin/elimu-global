@@ -57,7 +57,7 @@ function AllStudentsDashboard() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-400 to-blue-600 p-8">
+    <div className="h-screen w-full flex fixed over-flow-auto inset-0 bg-gradient-to-br from-blue-400 to-blue-600 p-8">
       <motion.div 
         className="max-w-6xl mx-auto"
         variants={containerVariants}

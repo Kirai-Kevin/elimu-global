@@ -1,11 +1,17 @@
 import { NestFactory } from '@nestjs/core';
-import { AppModule } from './app.module';
-import { GlobalExceptionFilter } from './filters/global-exception.filter';
+import { AppModule } from './app.module.js';
+import { Logger } from '@nestjs/common';
+import { GlobalExceptionFilter } from './filters/global-exception.filter.js';
 import { ValidationPipe } from '@nestjs/common';
 import { NestExpressApplication } from '@nestjs/platform-express';
-import { join } from 'path';
+import { fileURLToPath } from 'url';
+import { dirname, join } from 'path';
 import * as fs from 'fs';
 import { HttpAdapterHost } from '@nestjs/core';
+
+// Get the current file's path and directory
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
 async function bootstrap() {
   // Create uploads directory if it doesn't exist
@@ -17,25 +23,42 @@ async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule, {
     logger: ['error', 'warn', 'debug', 'verbose'],
   });
-  
-  // Enable CORS
-  app.enableCors();
-  
+
+  // Enable CORS for all routes
+  app.enableCors({
+    origin: ['http://localhost:3000', 'http://localhost:3001', 'https://elimu-global.com'], 
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
+    credentials: true,
+  });
+
   // Serve static files
   app.useStaticAssets(join(__dirname, '..', 'uploads'), {
     prefix: '/uploads/',
   });
-  
+
   // Global validation pipe
-  app.useGlobalPipes(new ValidationPipe({
-    whitelist: true,
-    transform: true,
-  }));
-  
+  app.useGlobalPipes(
+    new ValidationPipe({
+      whitelist: true,
+      forbidNonWhitelisted: true,
+      transform: true,
+    })
+  );
+
   // Global exception filter
   const httpAdapterHost = app.get(HttpAdapterHost);
   app.useGlobalFilters(new GlobalExceptionFilter(httpAdapterHost));
-  
-  await app.listen(3000);
+
+  const port = process.env.PORT || 8000;
+  const logger = new Logger('Bootstrap');
+
+  await app.listen(port, () => {
+    logger.log(`Server running on port ${port}`);
+  });
 }
-bootstrap();
+
+bootstrap().catch(err => {
+  console.error('Error during application bootstrap:', err);
+  process.exit(1);
+});

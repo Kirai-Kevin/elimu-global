@@ -1,5 +1,5 @@
 import { Controller, Get, Post, Body, Param, Put, Delete, Query } from '@nestjs/common';
-import { AssignmentsService } from './assignments.service';
+import { AssignmentsService } from './assignments.service.js';
 
 @Controller('assignments')
 export class AssignmentsController {

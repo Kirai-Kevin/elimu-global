@@ -6,13 +6,13 @@ export type ScheduleDocument = HydratedDocument<Schedule>;
 @Schema({ timestamps: true })
 export class Schedule {
   @Prop({ required: true })
-  startTime: Date;
+  startTime!: Date;
 
   @Prop({ required: true })
-  endTime: Date;
+  endTime!: Date;
 
   @Prop({ type: Types.ObjectId, ref: 'Course', required: true })
-  courseId: Types.ObjectId;
+  courseId!: Types.ObjectId;
 
   @Prop({ type: Types.ObjectId, ref: 'Lesson' })
   lessonId?: Types.ObjectId;

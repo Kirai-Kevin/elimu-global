@@ -1,0 +1,51 @@
+Data Science Fundamentals
+
+Course Overview:
+Data science is a rapidly growing field that combines statistics, computer science, and domain expertise to extract insights from data. This course provides a solid foundation in data science principles and techniques.
+
+Learning Objectives:
+- Understand the core concepts of data science
+- Learn basic statistical analysis techniques
+- Develop skills in data visualization
+- Introduction to machine learning concepts
+
+Course Curriculum:
+1. Introduction to Data Science
+   - What is data science?
+   - Role of a data scientist
+   - Data science workflow
+   - Ethical considerations
+
+2. Statistics for Data Science
+   - Descriptive statistics
+   - Probability theory
+   - Hypothesis testing
+   - Regression analysis
+
+3. Data Manipulation and Analysis
+   - Data cleaning techniques
+   - Pandas library in Python
+   - Data transformation
+   - Handling missing data
+
+4. Data Visualization
+   - Matplotlib and Seaborn
+   - Creating meaningful charts
+   - Storytelling with data
+   - Interactive visualizations
+
+5. Machine Learning Basics
+   - Supervised vs unsupervised learning
+   - Classification algorithms
+   - Clustering techniques
+   - Model evaluation
+
+Prerequisites:
+- Basic programming knowledge (Python preferred)
+- High school level mathematics
+- Curiosity and analytical thinking
+
+Estimated Course Duration: 30 hours
+
+Instructor: Dr. Michael Chen
+Expertise: Data Science and Machine Learning

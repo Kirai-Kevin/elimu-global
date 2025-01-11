@@ -23,59 +23,45 @@ function LoginSignUp() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    // Generate a simple token (in a real app, this would come from your backend)
-    const token = btoa(formData.email + ':' + new Date().getTime());
-    
-    // Store auth token
-    localStorage.setItem('userToken', token);
-    
-    // Store user data in localStorage
-    localStorage.setItem('user', JSON.stringify({
-      ...formData,
-      // Add token and expiry
-      token: token,
-      expiryTime: new Date(Date.now() + 24 * 60 * 60 * 1000) // 24 hours from now
-    }));
-    
-    // Clear any previously selected plan
-    localStorage.removeItem('selectedPlan');
-    
-    // Simulate sending data to recommendation AI
+
     try {
-      const response = await fetch(config.apiUrl, {
+      const response = await fetch('https://centralize-auth-elimu.onrender.com/auth/login/student', {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${config.groqApiKey}`,
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          model: 'mixtral-8x7b-32768',
-          messages: [
-            {
-              role: 'system',
-              content: 'You are an AI that provides personalized learning recommendations based on student data.',
-            },
-            {
-              role: 'user',
-              content: `New student data: ${JSON.stringify(formData)}. Provide initial learning recommendations.`,
-            },
-          ],
+          email: formData.email,
+          password: formData.password,
         }),
       });
 
+      if (!response.ok) {
+        const errorData = await response.json();
+        console.error('Login failed:', errorData);
+        // Handle login error (e.g., show an error message)
+        return;
+      }
+
       const data = await response.json();
       
-      // Store the AI recommendations
-      localStorage.setItem('recommendations', JSON.stringify(data));
+      // Store auth token
+      localStorage.setItem('userToken', data.token);
       
-      // Navigate to plan selection
+      // Store user data in localStorage
+      localStorage.setItem('user', JSON.stringify({
+        ...data.user,
+        token: data.token,
+        expiryTime: new Date(Date.now() + 24 * 60 * 60 * 1000) // 24 hours from now
+      }));
+      
+      // Clear any previously selected plan
+      localStorage.removeItem('selectedPlan');
+
       navigate('/all-students');
-      
     } catch (error) {
-      console.error('Error:', error);
-      // Still navigate even if AI recommendation fails
-      navigate('/all-students');
+      console.error('Error during login:', error);
+      // Handle network errors or other exceptions
     }
   };
 
@@ -93,7 +79,7 @@ function LoginSignUp() {
   };
 
   return (
-    <div className="min-h-screen w-full flex items-center justify-center bg-gradient-to-br from-blue-400 via-blue-500 to-blue-600">
+    <div className="min-h-screen w-full flex items-center justify-center bg-gradient-to-br from-blue-400 via-blue-500 to-blue-600 overflow-y-auto">
       <div className="container mx-auto flex items-center justify-center px-4">
         {/* Login/Signup Card */}
         <motion.div 

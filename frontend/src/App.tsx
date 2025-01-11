@@ -21,6 +21,10 @@ import LanguagePreferences from './components/LanguagePreferences';
 import Schedule from './components/Schedule';
 import Resources from './components/Resources';
 import PageTransition from './components/PageTransition';
+import FreeCoursesList from './components/FreeCourses/FreeCoursesList';
+import FeaturedCourses from './components/FreeCourses/FeaturedCourses';
+import CourseDetail from './components/FreeCourses/CourseDetail';
+import './components/FreeCourses/FreeCourses.css';
 
 // Auth checks
 const isAuthenticated = () => {
@@ -124,6 +128,38 @@ function AnimatedRoutes() {
           <Route path="privacy-settings" element={<PrivacySettings />} />
           <Route path="language-preferences" element={<LanguagePreferences />} />
         </Route>
+
+        {/* Free Courses Routes */}
+        <Route 
+          path="/free-courses" 
+          element={
+            <ProtectedRoute>
+              <PageTransition>
+                <FreeCoursesList />
+              </PageTransition>
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="/featured-courses" 
+          element={
+            <ProtectedRoute>
+              <PageTransition>
+                <FeaturedCourses />
+              </PageTransition>
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="/courses/:courseId" 
+          element={
+            <ProtectedRoute>
+              <PageTransition>
+                <CourseDetail />
+              </PageTransition>
+            </ProtectedRoute>
+          } 
+        />
 
         {/* Catch all route - redirect to login */}
         <Route path="*" element={<Navigate to="/login" replace />} />

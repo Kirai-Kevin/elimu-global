@@ -1,18 +1,26 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
+import Groq from 'groq-sdk';
 import {
   CreateCourseDto,
   UpdateCourseDto,
   UpdateContentDto,
   SearchCoursesDto,
   UploadVideoDto,
+  GenerateContentDto,
 } from './dto/course.dto';
-import { Course } from './schemas/course.schema';
+import { Course } from './schemas/course.schema.js';
 
 @Injectable()
 export class CoursesService {
-  constructor(@InjectModel(Course.name) private courseModel: Model<Course>) {}
+  private groq: Groq;
+
+  constructor(@InjectModel(Course.name) private courseModel: Model<Course>) {
+    this.groq = new Groq({
+      apiKey: process.env.GROQ_API_KEY,
+    });
+  }
 
   async create(createCourseDto: CreateCourseDto) {
     const { instructorId, ...courseData } = createCourseDto;
@@ -20,210 +28,281 @@ export class CoursesService {
       ...courseData,
       instructorIds: [instructorId],
       studentIds: [],
+      materials: [],
+      lessons: [],
+      assignments: [],
+      schedules: [],
+      rating: 0,
+      published: false,
+      tags: [],
     });
     return await course.save();
   }
 
   async findAll() {
-    return this.courseModel
-      .find()
-      .populate('instructors')
+    return this.courseModel.find()
       .populate('students')
       .populate('materials')
       .populate('lessons')
+      .populate('schedules')
       .populate('assignments')
-      .populate('schedules');
+      .exec();
   }
 
-  async search(searchDto: SearchCoursesDto) {
-    const { query, category, level, minRating, instructorId, tags } = searchDto;
+  async search(searchDto: SearchCoursesDto & { title?: string }) {
+    const query = this.courseModel.find();
 
-    const queryObj: any = {
-      published: true,
-    };
-
-    if (query) {
-      queryObj.$or = [
-        { title: { $regex: query, $options: 'i' } },
-        { description: { $regex: query, $options: 'i' } },
-      ];
+    if (searchDto.title) {
+      query.where('title', new RegExp(searchDto.title, 'i'));
     }
 
-    if (category) {
-      queryObj.category = category;
+    if (searchDto.category) {
+      query.where('category', searchDto.category);
     }
 
-    if (level) {
-      queryObj.level = level;
+    if (searchDto.level) {
+      query.where('level', searchDto.level);
     }
 
-    if (minRating) {
-      queryObj.rating = {
-        $gte: minRating,
-      };
-    }
-
-    if (instructorId) {
-      queryObj.instructorIds = {
-        $in: [instructorId],
-      };
-    }
-
-    if (tags && tags.length > 0) {
-      queryObj.tags = {
-        $all: tags,
-      };
-    }
-
-    return this.courseModel
-      .find(queryObj)
-      .populate('instructors')
-      .populate('students')
-      .populate('materials')
-      .populate('lessons')
-      .populate('assignments');
+    return query.exec();
   }
 
   async findOne(id: string) {
-    const course = await this.courseModel
-      .findById(id)
-      .populate('instructors')
+    const course = await this.courseModel.findById(id)
       .populate('students')
       .populate('materials')
       .populate('lessons')
-      .populate('schedule')
+      .populate('schedules')
       .populate('assignments')
-      .populate('submissions')
-      .populate('schedules');
+      .exec();
+
     if (!course) {
       throw new NotFoundException(`Course with ID ${id} not found`);
     }
+
     return course;
   }
 
   async update(id: string, updateCourseDto: UpdateCourseDto) {
-    const { instructorIds, studentIds, ...updateData } = updateCourseDto;
-    const course = await this.courseModel
-      .findByIdAndUpdate(
-        id,
-        {
-          ...updateData,
-          ...(instructorIds && { instructorIds }),
-          ...(studentIds && { studentIds }),
-        },
-        { new: true },
-      )
-      .populate('instructors')
-      .populate('students')
-      .populate('materials')
-      .populate('lessons')
-      .populate('assignments');
-    if (!course) {
-      throw new NotFoundException(`Course with ID ${id} not found`);
-    }
-    return course;
-  }
-
-  async updateContent(id: string, updateContentDto: UpdateContentDto) {
     const course = await this.courseModel.findByIdAndUpdate(
-      id,
-      {
-        content: updateContentDto.content,
-      },
-      { new: true },
+      id, 
+      updateCourseDto, 
+      { new: true }
     );
-    if (!course) {
-      throw new NotFoundException(`Course with ID ${id} not found`);
-    }
-    return course;
-  }
 
-  async uploadVideo(id: string, uploadVideoDto: UploadVideoDto) {
-    const course = await this.courseModel.findByIdAndUpdate(
-      id,
-      {
-        videoUrl: uploadVideoDto.videoUrl,
-        duration: uploadVideoDto.duration,
-      },
-      { new: true },
-    );
     if (!course) {
       throw new NotFoundException(`Course with ID ${id} not found`);
     }
+
     return course;
   }
 
   async remove(id: string) {
-    const result = await this.courseModel.findByIdAndDelete(id);
-    if (!result) {
-      throw new NotFoundException(`Course with ID ${id} not found`);
-    }
-    return result;
-  }
+    const course = await this.courseModel.findByIdAndDelete(id);
 
-  async getContent(id: string) {
-    const course = await this.courseModel.findById(
-      id,
-      'content materials lessons assignments videoUrl duration',
-    );
     if (!course) {
       throw new NotFoundException(`Course with ID ${id} not found`);
     }
+
     return course;
   }
 
-  async generateContent(_message: string) {
-    // This method is not implemented as it requires a different service
-    throw new Error('Method not implemented');
+  async updateContent(id: string, updateContentDto: UpdateContentDto) {
+    const course = await this.courseModel.findById(id);
+    if (!course) {
+      throw new NotFoundException(`Course with ID ${id} not found`);
+    }
+
+    // Validate and parse content
+    const validatedContent = updateContentDto.content.split('\n')
+      .filter(item => item.trim() !== '')
+      .map(item => ({
+        type: 'text',
+        title: '',
+        url: '',
+        description: item.trim()
+      }));
+
+    course.content = validatedContent;
+    return course.save();
   }
 
-  async generateCourse(_createCourseDto: CreateCourseDto) {
-    // This method is not implemented as it requires a different service
-    throw new Error('Method not implemented');
+  async uploadVideo(id: string, uploadVideoDto: UploadVideoDto) {
+    const course = await this.courseModel.findById(id);
+    if (!course) {
+      throw new NotFoundException(`Course with ID ${id} not found`);
+    }
+
+    if (!course.content) {
+      course.content = [];
+    }
+
+    course.content.push({
+      type: 'video',
+      title: uploadVideoDto.videoTitle || 'Untitled Video', 
+      url: uploadVideoDto.videoUrl,
+      description: uploadVideoDto.videoDescription || ''
+    });
+
+    return course.save();
   }
 
-  async analyzeCourse(_createCourseDto: CreateCourseDto) {
-    // This method is not implemented as it requires a different service
-    throw new Error('Method not implemented');
+  async generateContent(generateContentDto: GenerateContentDto) {
+    try {
+      const response = await this.groq.chat.completions.create({
+        model: 'llama2-70b-4096',
+        messages: [
+          {
+            role: 'system', 
+            content: 'You are an educational content generator. Create concise, informative course content.'
+          },
+          {
+            role: 'user', 
+            content: `Generate educational content for the following topic: ${generateContentDto.message}`
+          }
+        ],
+        max_tokens: 500,
+        temperature: 0.7,
+      });
+
+      const generatedContent = response.choices[0].message.content || '';
+      
+      return {
+        message: generatedContent.split('\n').map(line => ({
+          type: 'text',
+          title: '',
+          url: '',
+          description: line.trim()
+        }))
+      };
+    } catch (error) {
+      console.error('Content generation error:', error);
+      throw new BadRequestException('Failed to generate course content');
+    }
+  }
+
+  async generateCourse(createCourseDto: CreateCourseDto) {
+    try {
+      // Use Groq to enhance course details
+      const courseDetailsResponse = await this.groq.chat.completions.create({
+        model: 'llama2-70b-4096',
+        messages: [
+          {
+            role: 'system', 
+            content: 'You are an expert course designer. Enhance and expand course details.'
+          },
+          {
+            role: 'user', 
+            content: `Help me design a course with the following initial details: 
+              Title: ${createCourseDto.title}
+              Description: ${createCourseDto.description}
+              Level: ${createCourseDto.level}`
+          }
+        ],
+        max_tokens: 300,
+        temperature: 0.7,
+      });
+
+      const enhancedDetails = courseDetailsResponse.choices[0].message.content || '';
+
+      // Merge AI-generated details with original DTO
+      const enrichedCourseDto = {
+        ...createCourseDto,
+        description: enhancedDetails,
+        tags: ['AI-Enhanced'],
+      };
+
+      return this.create(enrichedCourseDto);
+    } catch (error) {
+      console.error('Course generation error:', error);
+      throw new BadRequestException('Failed to generate course');
+    }
+  }
+
+  async analyzeCourse(createCourseDto: CreateCourseDto) {
+    try {
+      const analysisResponse = await this.groq.chat.completions.create({
+        model: 'llama2-70b-4096',
+        messages: [
+          {
+            role: 'system', 
+            content: 'You are an expert course analyst. Provide insights and recommendations.'
+          },
+          {
+            role: 'user', 
+            content: `Analyze the potential and structure of a course with these details:
+              Title: ${createCourseDto.title}
+              Description: ${createCourseDto.description}
+              Level: ${createCourseDto.level}`
+          }
+        ],
+        max_tokens: 300,
+        temperature: 0.7,
+      });
+
+      const courseAnalysis = analysisResponse.choices[0].message.content || '';
+
+      return { 
+        course: createCourseDto, 
+        analysis: courseAnalysis 
+      };
+    } catch (error) {
+      console.error('Course analysis error:', error);
+      throw new BadRequestException('Failed to analyze course');
+    }
   }
 
   async enrollStudent(courseId: string, studentId: string) {
     const course = await this.courseModel.findById(courseId);
-
     if (!course) {
       throw new NotFoundException(`Course with ID ${courseId} not found`);
     }
-    
-    // Convert studentId to ObjectId and check if it's not already in the array
-    const studentObjectId = new Types.ObjectId(studentId);
-    if (!course.studentIds.some(id => id.equals(studentObjectId))) {
-      course.studentIds.push(studentObjectId);
+
+    // Ensure studentIds is initialized
+    course.studentIds = course.studentIds || [];
+
+    if (!course.studentIds.some(id => id.equals(new Types.ObjectId(studentId)))) {
+      course.studentIds.push(new Types.ObjectId(studentId));
+      await course.save();
     }
-    
-    return await course.save();
+
+    return course;
+  }
+
+  async assignInstructor(courseId: string, instructorId: string) {
+    const course = await this.courseModel.findById(courseId);
+    if (!course) {
+      throw new NotFoundException(`Course with ID ${courseId} not found`);
+    }
+
+    // Ensure instructorIds is initialized
+    course.instructorIds = course.instructorIds || [];
+
+    if (!course.instructorIds.some(id => id.equals(new Types.ObjectId(instructorId)))) {
+      course.instructorIds.push(new Types.ObjectId(instructorId));
+      await course.save();
+    }
+
+    return course;
+  }
+
+  async getCourseContent(courseId: string) {
+    const course = await this.courseModel.findById(courseId);
+    if (!course) {
+      throw new NotFoundException(`Course with ID ${courseId} not found`);
+    }
+    return course.content || [];
   }
 
   async getEnrolledCourses(studentId: string) {
-    return this.courseModel
-      .find({ studentIds: { $in: [studentId] } })
-      .populate('instructors')
-      .populate('students')
-      .populate('materials')
-      .populate('lessons')
-      .populate('assignments');
+    return this.courseModel.find({ 
+      studentIds: new Types.ObjectId(studentId) 
+    });
   }
 
   async getTeachingCourses(instructorId: string) {
-    return this.courseModel
-      .find({ instructorIds: { $in: [instructorId] } })
-      .populate('instructors')
-      .populate('students')
-      .populate('materials')
-      .populate('lessons')
-      .populate('assignments');
-  }
-
-  async getCourseContent(id: string) {
-    return this.getContent(id);
+    return this.courseModel.find({ 
+      instructorIds: new Types.ObjectId(instructorId) 
+    });
   }
 }

@@ -1,0 +1,50 @@
+Introduction to Python Programming
+
+Course Overview:
+Python is a powerful, high-level programming language that is widely used in various domains including web development, data science, artificial intelligence, and more. This course provides a comprehensive introduction to Python programming for beginners.
+
+Learning Objectives:
+- Understand basic Python syntax and programming concepts
+- Write simple Python scripts and programs
+- Develop problem-solving skills using Python
+- Explore fundamental programming techniques
+
+Course Curriculum:
+1. Python Basics
+   - Installation and setup
+   - Variables and data types
+   - Basic input and output
+   - Arithmetic operations
+
+2. Control Structures
+   - Conditional statements (if-else)
+   - Loops (for and while)
+   - Break and continue statements
+
+3. Data Structures
+   - Lists
+   - Tuples
+   - Dictionaries
+   - Sets
+
+4. Functions
+   - Defining and calling functions
+   - Function arguments
+   - Return values
+   - Lambda functions
+
+5. Object-Oriented Programming
+   - Classes and objects
+   - Inheritance
+   - Encapsulation
+   - Polymorphism
+
+Prerequisites:
+- Basic computer literacy
+- Logical thinking skills
+- Enthusiasm for learning programming
+
+Estimated Course Duration: 20 hours
+
+Instructor: Dr. Emily Johnson
+Expertise: Software Development and Programming Education

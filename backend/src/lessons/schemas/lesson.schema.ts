@@ -6,13 +6,13 @@ export type LessonDocument = HydratedDocument<Lesson>;
 @Schema({ timestamps: true })
 export class Lesson {
   @Prop({ required: true })
-  title: string;
+  title!: string;
 
   @Prop()
   description?: string;
 
   @Prop({ type: Types.ObjectId, ref: 'Course', required: true })
-  courseId: Types.ObjectId;
+  courseId!: Types.ObjectId;
 
   @Prop()
   content?: string;

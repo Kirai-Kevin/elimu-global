@@ -3,61 +3,40 @@ import {
   Get,
   Post,
   Body,
-  Put,
+  Patch,
   Param,
   Delete,
-  UseInterceptors,
-  UploadedFile,
   Query,
+  UseGuards,
 } from '@nestjs/common';
-import { FileInterceptor } from '@nestjs/platform-express';
-import { CoursesService } from './courses.service';
+import { CoursesService } from './courses.service.js';
 import {
   CreateCourseDto,
   UpdateCourseDto,
   UpdateContentDto,
   SearchCoursesDto,
-  GenerateContentDto,
   EnrollStudentDto,
-  AssignInstructorDto,
   UploadVideoDto,
-} from './dto/course.dto';
-import { diskStorage } from 'multer';
-import { extname } from 'path';
-import { existsSync, mkdirSync, unlinkSync } from 'fs';
-import { BadRequestException, InternalServerErrorException } from '@nestjs/common';
+  GenerateContentDto,
+  AssignInstructorDto,
+} from './dto/course.dto.js';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard.js';
 
-@Controller('api/courses')
+@Controller('courses')
 export class CoursesController {
   constructor(private readonly coursesService: CoursesService) {}
 
   @Post()
+  @UseGuards(JwtAuthGuard)
   create(@Body() createCourseDto: CreateCourseDto) {
     return this.coursesService.create(createCourseDto);
   }
 
-  @Get('search')
-  search(
-    @Query('query') query?: string,
-    @Query('category') category?: string,
-    @Query('level') level?: string,
-    @Query('minRating') minRating?: number,
-    @Query('instructorId') instructorId?: string,
-    @Query('tags') tags?: string,
-  ) {
-    const searchDto: SearchCoursesDto = {
-      query,
-      category,
-      level,
-      minRating: minRating ? Number(minRating) : undefined,
-      instructorId,
-      tags: tags ? tags.split(',') : undefined,
-    };
-    return this.coursesService.search(searchDto);
-  }
-
   @Get()
-  findAll() {
+  findAll(@Query() searchDto: SearchCoursesDto) {
+    if (Object.keys(searchDto).length > 0) {
+      return this.coursesService.search(searchDto);
+    }
     return this.coursesService.findAll();
   }
 
@@ -66,134 +45,89 @@ export class CoursesController {
     return this.coursesService.findOne(id);
   }
 
-  @Get(':id/learn')
-  getCourseContent(@Param('id') id: string) {
-    return this.coursesService.getCourseContent(id);
-  }
-
-  @Put(':id')
-  update(@Param('id') id: string, @Body() updateCourseDto: UpdateCourseDto) {
+  @Patch(':id')
+  @UseGuards(JwtAuthGuard)
+  update(
+    @Param('id') id: string,
+    @Body() updateCourseDto: UpdateCourseDto,
+  ) {
     return this.coursesService.update(id, updateCourseDto);
   }
 
-  @Put(':id/content')
-  updateContent(@Param('id') id: string, @Body() updateContentDto: UpdateContentDto) {
-    return this.coursesService.updateContent(id, updateContentDto);
-  }
-
   @Delete(':id')
+  @UseGuards(JwtAuthGuard)
   remove(@Param('id') id: string) {
     return this.coursesService.remove(id);
   }
 
-  @Post('generate-content')
-  generateContent(@Body() generateContentDto: GenerateContentDto) {
-    return this.coursesService.generateContent(generateContentDto.message);
+  @Post(':id/content')
+  @UseGuards(JwtAuthGuard)
+  updateContent(
+    @Param('id') id: string,
+    @Body() updateContentDto: UpdateContentDto,
+  ) {
+    return this.coursesService.updateContent(id, updateContentDto);
   }
 
-  @Post('course-generation')
+  @Post(':id/video')
+  @UseGuards(JwtAuthGuard)
+  uploadVideo(
+    @Param('id') id: string,
+    @Body() uploadVideoDto: UploadVideoDto,
+  ) {
+    return this.coursesService.uploadVideo(id, uploadVideoDto);
+  }
+
+  @Post('generate-content')
+  @UseGuards(JwtAuthGuard)
+  generateContent(@Body() generateContentDto: GenerateContentDto) {
+    return this.coursesService.generateContent(generateContentDto);
+  }
+
+  @Post('generate-course')
+  @UseGuards(JwtAuthGuard)
   generateCourse(@Body() createCourseDto: CreateCourseDto) {
     return this.coursesService.generateCourse(createCourseDto);
   }
 
-  @Post('analyze')
+  @Post('analyze-course')
+  @UseGuards(JwtAuthGuard)
   analyzeCourse(@Body() createCourseDto: CreateCourseDto) {
     return this.coursesService.analyzeCourse(createCourseDto);
   }
 
-  @Post(':id/enroll')
-  enrollStudent(@Param('id') id: string, @Body() enrollStudentDto: EnrollStudentDto) {
-    return this.coursesService.enrollStudent(id, enrollStudentDto.studentId);
+  @Post('enroll')
+  @UseGuards(JwtAuthGuard)
+  enrollStudent(@Body() enrollStudentDto: EnrollStudentDto) {
+    return this.coursesService.enrollStudent(
+      enrollStudentDto.courseId,
+      enrollStudentDto.studentId,
+    );
   }
 
-  @Get('student/:studentId')
-  getEnrolledCourses(@Param('studentId') studentId: string) {
+  @Post('assign-instructor')
+  @UseGuards(JwtAuthGuard)
+  assignInstructor(@Body() assignInstructorDto: AssignInstructorDto) {
+    return this.coursesService.assignInstructor(
+      assignInstructorDto.courseId,
+      assignInstructorDto.instructorId,
+    );
+  }
+
+  @Get(':id/content')
+  getCourseContent(@Param('id') id: string) {
+    return this.coursesService.getCourseContent(id);
+  }
+
+  @Get('enrolled')
+  @UseGuards(JwtAuthGuard)
+  getEnrolledCourses(@Query('studentId') studentId: string) {
     return this.coursesService.getEnrolledCourses(studentId);
   }
 
-  @Get('instructor/:instructorId')
-  getTeachingCourses(@Param('instructorId') instructorId: string) {
+  @Get('teaching')
+  @UseGuards(JwtAuthGuard)
+  getTeachingCourses(@Query('instructorId') instructorId: string) {
     return this.coursesService.getTeachingCourses(instructorId);
-  }
-
-  @Post(':id/upload')
-  @UseInterceptors(FileInterceptor('file', {
-    storage: diskStorage({
-      destination: (req, file, cb) => {
-        const uploadPath = './uploads/courses';
-        console.log('Upload path:', uploadPath);
-        try {
-          if (!existsSync(uploadPath)) {
-            mkdirSync(uploadPath, { recursive: true });
-          }
-          cb(null, uploadPath);
-        } catch (error) {
-          console.error('Error creating directory:', error);
-          cb(error, uploadPath);
-        }
-      },
-      filename: (req, file, cb) => {
-        try {
-          const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-          const filename = `${uniqueSuffix}${extname(file.originalname)}`;
-          console.log('Generated filename:', filename);
-          cb(null, filename);
-        } catch (error) {
-          console.error('Error generating filename:', error);
-          cb(error, '');
-        }
-      },
-    }),
-    fileFilter: (req, file, cb) => {
-      console.log('Received file:', file);
-      cb(null, true);
-    },
-    limits: {
-      fileSize: 1024 * 1024 * 100 // 100MB limit
-    }
-  }))
-  async uploadFile(
-    @Param('id') id: string,
-    @UploadedFile() file: Express.Multer.File
-  ) {
-    console.log('Upload handler called with id:', id);
-    console.log('Received file:', file);
-
-    if (!file) {
-      throw new BadRequestException('No file uploaded');
-    }
-
-    const baseUrl = process.env.API_URL || `http://localhost:3000`;
-    const fileUrl = `${baseUrl}/uploads/courses/${file.filename}`;
-    console.log('File URL:', fileUrl);
-
-    try {
-      const course = await this.coursesService.uploadVideo(id, {
-        courseId: id,
-        videoUrl: fileUrl,
-        duration: 0
-      });
-
-      return {
-        message: 'File uploaded successfully',
-        course,
-        file: {
-          originalname: file.originalname,
-          filename: file.filename,
-          url: fileUrl
-        }
-      };
-    } catch (error) {
-      console.error('Error in upload handler:', error);
-      try {
-        if (file.path) {
-          unlinkSync(file.path);
-          console.log('Cleaned up file:', file.path);
-        }
-      } catch (e) {
-        console.error('Failed to clean up file:', e);
-      }
-      throw new InternalServerErrorException('Failed to process upload', error.message);
-    }
   }
 }

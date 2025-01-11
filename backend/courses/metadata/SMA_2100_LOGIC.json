@@ -1,0 +1,22 @@
+{
+  "id": "SMA_2100_LOGIC",
+  "title": "Logic and Set Theory",
+  "description": "An introduction to mathematical logic and set theory, covering propositional logic, predicate logic, and basic set operations.",
+  "level": "Beginner",
+  "subject": "Mathematics",
+  "learningObjectives": [
+    "Understand basic concepts of propositional logic",
+    "Learn to construct truth tables and evaluate logical expressions",
+    "Master the fundamentals of predicate logic",
+    "Apply logical reasoning to mathematical proofs"
+  ],
+  "pdfFileName": "SMA_2100_LOGIC.pdf",
+  "prerequisites": [],
+  "estimatedHours": 10,
+  "topics": [
+    "Propositional Logic",
+    "Truth Tables",
+    "Predicate Logic",
+    "Logical Proofs"
+  ]
+}

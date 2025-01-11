@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { HomeIcon, UserIcon, AwardIcon, VideoIcon, BookOpenIcon, CalendarIcon, FolderIcon, LibraryIcon, BarChartIcon, MoreHorizontalIcon, MenuIcon, XIcon, LogOut } from 'lucide-react';
+import { HomeIcon, UserIcon, AwardIcon, VideoIcon, BookOpenIcon, CalendarIcon, FolderIcon, LibraryIcon, BarChartIcon, MoreHorizontalIcon, MenuIcon, XIcon, LogOut, BookIcon, PlayIcon } from 'lucide-react';
 import ChatBot from './ChatBot';
 
 const sidebarItems = [
@@ -18,6 +18,10 @@ const sidebarItems = [
   { name: 'Library', icon: LibraryIcon, path: '/dashboard/library' },
   { name: 'Progress', icon: BarChartIcon, path: '/dashboard/progress' },
   { name: 'More', icon: MoreHorizontalIcon, path: '/dashboard/more' },
+  
+  // New Free Courses Section
+  { name: 'All Free Courses', icon: BookIcon, path: '/free-courses' },
+  { name: 'Featured Courses', icon: PlayIcon, path: '/featured-courses' },
 ];
 
 function Layout() {

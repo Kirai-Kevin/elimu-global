@@ -1,0 +1,23 @@
+{
+  "id": "SMA_2100_NOTES_FUNCTIONS",
+  "title": "Functions and Relations",
+  "description": "A comprehensive study of mathematical functions, their properties, and relationships between sets.",
+  "level": "Beginner",
+  "subject": "Mathematics",
+  "learningObjectives": [
+    "Understand the concept of functions and their properties",
+    "Learn about different types of functions",
+    "Master function composition and inverse functions",
+    "Apply function concepts to real-world problems"
+  ],
+  "pdfFileName": "SMA_2100_NOTES_FUNCTIONS.pdf",
+  "prerequisites": [],
+  "estimatedHours": 8,
+  "topics": [
+    "Function Definition",
+    "Domain and Range",
+    "Function Types",
+    "Composition",
+    "Inverse Functions"
+  ]
+}

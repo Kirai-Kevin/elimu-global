@@ -1,4 +1,4 @@
-import { IsString, IsOptional, IsBoolean, IsArray, IsNumber, IsUrl, Min, Max, IsEnum } from 'class-validator';
+import { IsString, IsOptional, IsArray, IsNumber, IsUrl, Min, Max, IsEnum, IsBoolean } from 'class-validator';
 
 export enum CourseLevel {
   BEGINNER = 'beginner',
@@ -8,7 +8,7 @@ export enum CourseLevel {
 
 export class CreateCourseDto {
   @IsString()
-  title: string;
+  title!: string;
 
   @IsString()
   @IsOptional()
@@ -19,7 +19,7 @@ export class CreateCourseDto {
   content?: string;
 
   @IsString()
-  instructorId: string;
+  instructorId!: string;
 
   @IsUrl()
   @IsOptional()
@@ -66,7 +66,7 @@ export class UpdateCourseDto extends CreateCourseDto {
 
 export class UpdateContentDto {
   @IsString()
-  content: string;
+  content!: string;
 }
 
 export class SearchCoursesDto {
@@ -99,27 +99,42 @@ export class SearchCoursesDto {
 
 export class GenerateContentDto {
   @IsString()
-  message: string;
+  message!: string;
 }
 
 export class EnrollStudentDto {
   @IsString()
-  studentId: string;
+  courseId!: string;
+
+  @IsString()
+  studentId!: string;
 }
 
 export class AssignInstructorDto {
   @IsString()
-  instructorId: string;
+  courseId!: string;
+
+  @IsString()
+  instructorId!: string;
 }
 
 export class UploadVideoDto {
   @IsString()
-  courseId: string;
+  courseId!: string;
+
+  @IsString()
+  @IsOptional()
+  videoTitle?: string;
 
   @IsUrl()
-  videoUrl: string;
+  videoUrl!: string;
+
+  @IsString()
+  @IsOptional()
+  videoDescription?: string;
 
   @IsNumber()
   @Min(1)
-  duration: number;
+  @IsOptional()
+  duration?: number;
 }
