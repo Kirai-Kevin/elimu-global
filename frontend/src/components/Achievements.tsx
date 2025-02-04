@@ -1,129 +1,65 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Trophy, Medal, Star, Target, Crown, Award, BookOpen, Zap, Flag } from 'lucide-react';
+import { 
+  Trophy, Medal, Star, Target, Crown, Award, BookOpen, Zap, Flag, 
+  RocketIcon, CheckCircle2, TrendingUp, Users, ArrowUp 
+} from 'lucide-react';
+import { authenticatedGet } from '../utils/api';
+import { formatDistanceToNow, parseISO } from 'date-fns';
 
-interface Achievement {
-  id: number;
-  title: string;
+interface Badge {
+  type: string;
+  name: string;
   description: string;
-  type: 'academic' | 'skill' | 'milestone';
-  icon: 'trophy' | 'medal' | 'star' | 'crown';
-  progress: number;
-  maxProgress: number;
-  xpPoints: number;
-  dateEarned?: string;
-  rarity: 'common' | 'rare' | 'epic' | 'legendary';
+  icon: string;
 }
 
-interface AchievementStats {
-  totalAchievements: number;
-  completedAchievements: number;
-  totalXP: number;
-  currentLevel: number;
-  nextLevelXP: number;
-  currentLevelXP: number;
+interface RecentXPHistory {
+  source: string;
+  amount: number;
+  createdAt: string;
 }
+
+interface Achievements {
+  courses: number;
+  quizzes: number;
+  aiInteractions: number;
+  _id?: string;
+}
+
+interface GamificationData {
+  totalXP: number;
+  level: number;
+  badges: Badge[];
+  achievements: Achievements;
+  recentXPHistory: RecentXPHistory[];
+  leaderboardPoints: number;
+}
+
+const calculateXPForNextLevel = (currentLevel: number): number => {
+  return Math.floor(100 * Math.pow(1.5, currentLevel));
+};
 
 function Achievements() {
-  const [achievements, setAchievements] = useState<Achievement[]>([]);
-  const [stats, setStats] = useState<AchievementStats>({
-    totalAchievements: 0,
-    completedAchievements: 0,
-    totalXP: 0,
-    currentLevel: 1,
-    nextLevelXP: 1000,
-    currentLevelXP: 0,
-  });
-  const [filter, setFilter] = useState<'all' | 'academic' | 'skill' | 'milestone'>('all');
+  const [gamificationData, setGamificationData] = useState<GamificationData | null>(null);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    // Simulated achievements data
-    const mockAchievements: Achievement[] = [
-      {
-        id: 1,
-        title: 'Perfect Score',
-        description: 'Achieve 100% on any test or assignment',
-        type: 'academic',
-        icon: 'trophy',
-        progress: 3,
-        maxProgress: 3,
-        xpPoints: 500,
-        dateEarned: '2024-12-20',
-        rarity: 'epic'
-      },
-      {
-        id: 2,
-        title: 'Study Streak',
-        description: 'Complete lessons for 7 consecutive days',
-        type: 'milestone',
-        icon: 'star',
-        progress: 5,
-        maxProgress: 7,
-        xpPoints: 300,
-        rarity: 'rare'
-      },
-      {
-        id: 3,
-        title: 'Knowledge Seeker',
-        description: 'Complete 50 lessons',
-        type: 'milestone',
-        icon: 'medal',
-        progress: 45,
-        maxProgress: 50,
-        xpPoints: 1000,
-        rarity: 'legendary'
-      },
-      {
-        id: 4,
-        title: 'Math Master',
-        description: 'Complete all math modules with at least 90%',
-        type: 'academic',
-        icon: 'crown',
-        progress: 8,
-        maxProgress: 10,
-        xpPoints: 800,
-        rarity: 'epic'
-      },
-      {
-        id: 5,
-        title: 'Quick Learner',
-        description: 'Complete 5 lessons in one day',
-        type: 'skill',
-        icon: 'star',
-        progress: 3,
-        maxProgress: 5,
-        xpPoints: 200,
-        rarity: 'common'
-      },
-      {
-        id: 6,
-        title: 'Science Explorer',
-        description: 'Complete all science experiments',
-        type: 'academic',
-        icon: 'medal',
-        progress: 6,
-        maxProgress: 8,
-        xpPoints: 600,
-        rarity: 'rare'
+    const fetchGamificationData = async () => {
+      try {
+        setLoading(true);
+        const gamificationResponse = await authenticatedGet<GamificationData>('/student/gamification/gamification-data');
+        setGamificationData(gamificationResponse.data);
+        setLoading(false);
+      } catch (err) {
+        console.error('Failed to fetch gamification data:', err);
+        setError('Failed to load gamification details. Please try again later.');
+        setLoading(false);
       }
-    ];
+    };
 
-    setAchievements(mockAchievements);
-
-    // Calculate stats
-    const completed = mockAchievements.filter(a => a.progress >= a.maxProgress).length;
-    const totalXP = mockAchievements.reduce((sum, a) => 
-      sum + (a.progress >= a.maxProgress ? a.xpPoints : Math.floor((a.progress / a.maxProgress) * a.xpPoints))
-    , 0);
-
-    setStats({
-      totalAchievements: mockAchievements.length,
-      completedAchievements: completed,
-      totalXP: totalXP,
-      currentLevel: Math.floor(totalXP / 1000) + 1,
-      nextLevelXP: (Math.floor(totalXP / 1000) + 1) * 1000,
-      currentLevelXP: totalXP % 1000,
-    });
+    fetchGamificationData();
   }, []);
 
   const containerVariants = {
@@ -146,173 +82,306 @@ function Achievements() {
     }
   };
 
-  const getIconComponent = (iconName: Achievement['icon']) => {
-    switch (iconName) {
-      case 'trophy': return <Trophy className="w-6 h-6" />;
-      case 'medal': return <Medal className="w-6 h-6" />;
-      case 'star': return <Star className="w-6 h-6" />;
-      case 'crown': return <Crown className="w-6 h-6" />;
-      default: return <Award className="w-6 h-6" />;
-    }
+  const getSourceIcon = (source: string) => {
+    const sourceIcons = {
+      'course': <Trophy className="w-5 h-5 text-green-500" />,
+      'quiz': <BookOpen className="w-5 h-5 text-blue-500" />,
+      'ai_interaction': <Zap className="w-5 h-5 text-purple-500" />,
+      'default': <Star className="w-5 h-5 text-gray-500" />
+    };
+    return sourceIcons[source] || sourceIcons['default'];
   };
 
-  const getRarityColor = (rarity: Achievement['rarity']) => {
-    switch (rarity) {
-      case 'common': return 'bg-gray-100 text-gray-600';
-      case 'rare': return 'bg-blue-100 text-blue-600';
-      case 'epic': return 'bg-purple-100 text-purple-600';
-      case 'legendary': return 'bg-yellow-100 text-yellow-600';
-      default: return 'bg-gray-100 text-gray-600';
-    }
-  };
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center min-h-screen">
+        <motion.div
+          animate={{ 
+            rotate: [0, 360],
+            scale: [1, 1.2, 1]
+          }}
+          transition={{ 
+            duration: 2, 
+            repeat: Infinity,
+            ease: "easeInOut"
+          }}
+        >
+          <Trophy className="w-16 h-16 text-blue-500" />
+        </motion.div>
+      </div>
+    );
+  }
 
-  const filteredAchievements = achievements.filter(
-    achievement => filter === 'all' || achievement.type === filter
+  if (error) {
+    return (
+      <div className="text-center text-red-500 p-8">
+        {error}
+      </div>
+    );
+  }
+
+  // If no achievements or XP, show professional onboarding view
+  if (gamificationData && 
+      gamificationData.totalXP === 0 && 
+      gamificationData.level === 1 && 
+      gamificationData.badges.length === 0 && 
+      gamificationData.recentXPHistory.length === 0
+  ) {
+    return (
+      <div className="min-h-screen w-full bg-gradient-to-br from-blue-50 to-white flex items-center justify-center p-8">
+        <motion.div 
+          className="max-w-4xl w-full bg-white rounded-2xl shadow-2xl overflow-hidden"
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.5 }}
+        >
+          <div className="grid md:grid-cols-2">
+            {/* Illustration Side */}
+            <div className="bg-blue-500 text-white p-12 flex flex-col justify-center items-center">
+              <RocketIcon className="w-32 h-32 mb-6 text-white" strokeWidth={1} />
+              <h2 className="text-3xl font-bold mb-4 text-center">
+                Your Learning Journey Begins
+              </h2>
+              <p className="text-center text-blue-100 mb-6">
+                Every great achievement starts with a single step. 
+                Get ready to unlock your potential!
+              </p>
+              <div className="space-y-3 w-full">
+                <div className="flex items-center bg-white/10 p-3 rounded-lg">
+                  <CheckCircle2 className="w-6 h-6 mr-3 text-yellow-300" />
+                  <span>Track Your Progress</span>
+                </div>
+                <div className="flex items-center bg-white/10 p-3 rounded-lg">
+                  <TrendingUp className="w-6 h-6 mr-3 text-green-300" />
+                  <span>Earn XP and Levels</span>
+                </div>
+                <div className="flex items-center bg-white/10 p-3 rounded-lg">
+                  <Users className="w-6 h-6 mr-3 text-purple-300" />
+                  <span>Join the Leaderboard</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Action Side */}
+            <div className="p-12 flex flex-col justify-center">
+              <h3 className="text-2xl font-bold text-gray-800 mb-6">
+                Start Earning XP Today!
+              </h3>
+              
+              <div className="space-y-4 mb-8">
+                <div className="bg-green-50 border-l-4 border-green-500 p-4 rounded">
+                  <div className="flex items-center mb-2">
+                    <BookOpen className="w-6 h-6 mr-3 text-green-600" />
+                    <h4 className="font-semibold text-green-800">Complete Courses</h4>
+                  </div>
+                  <p className="text-green-700">
+                    Finish your first course and start accumulating XP immediately.
+                  </p>
+                </div>
+                
+                <div className="bg-blue-50 border-l-4 border-blue-500 p-4 rounded">
+                  <div className="flex items-center mb-2">
+                    <Trophy className="w-6 h-6 mr-3 text-blue-600" />
+                    <h4 className="font-semibold text-blue-800">Take Quizzes</h4>
+                  </div>
+                  <p className="text-blue-700">
+                    Challenge yourself with quizzes to boost your XP and skills.
+                  </p>
+                </div>
+                
+                <div className="bg-purple-50 border-l-4 border-purple-500 p-4 rounded">
+                  <div className="flex items-center mb-2">
+                    <Zap className="w-6 h-6 mr-3 text-purple-600" />
+                    <h4 className="font-semibold text-purple-800">Engage Actively</h4>
+                  </div>
+                  <p className="text-purple-700">
+                    Participate in AI interactions and community activities.
+                  </p>
+                </div>
+              </div>
+
+              <button 
+                className="w-full bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700 transition-colors flex items-center justify-center"
+                onClick={() => {
+                  // TODO: Add navigation or action to start learning
+                  console.log('Start Learning Journey');
+                }}
+              >
+                <RocketIcon className="w-5 h-5 mr-2" />
+                Start Your Learning Journey
+              </button>
+            </div>
+          </div>
+        </motion.div>
+      </div>
+    );
+  }
+
+  const xpForNextLevel = calculateXPForNextLevel(gamificationData?.level || 1);
+  const xpProgressPercentage = Math.min(
+    (gamificationData?.totalXP || 0 / xpForNextLevel) * 100, 
+    100
   );
 
   return (
-    <div className="min-h-screen w-full bg-gray-50">
-      <motion.div
-        className="w-full px-4 py-8"
-        variants={containerVariants}
-        initial="hidden"
-        animate="visible"
-      >
-        {/* Header with Illustration */}
-        <div className="flex flex-col md:flex-row items-center justify-between mb-8 bg-white rounded-xl p-6 shadow-lg">
-          <div className="md:w-1/2 mb-6 md:mb-0">
-            <h1 className="text-3xl font-bold text-gray-800 mb-4">Your Achievements</h1>
-            <p className="text-gray-600 mb-6">
-              Track your progress, earn rewards, and showcase your accomplishments in your
-              learning journey. Keep pushing forward to unlock more achievements!
-            </p>
-            <div className="flex flex-wrap gap-4">
-              <div className="flex items-center bg-yellow-50 px-4 py-2 rounded-lg">
-                <Trophy className="w-5 h-5 text-yellow-600 mr-2" />
-                <span className="text-yellow-600">Level {stats.currentLevel}</span>
-              </div>
-              <div className="flex items-center bg-green-50 px-4 py-2 rounded-lg">
-                <Target className="w-5 h-5 text-green-600 mr-2" />
-                <span className="text-green-600">{stats.totalXP} XP</span>
-              </div>
-              <div className="flex items-center bg-blue-50 px-4 py-2 rounded-lg">
-                <Award className="w-5 h-5 text-blue-600 mr-2" />
-                <span className="text-blue-600">{stats.completedAchievements}/{stats.totalAchievements} Complete</span>
-              </div>
-            </div>
-          </div>
-          <div className="md:w-1/2 flex justify-center">
-            <img
-              src="/images/achievements-illustration.svg"
-              alt="Achievements Illustration"
-              className="w-full max-w-md h-auto"
-            />
-          </div>
-        </div>
-
-        {/* Level Progress */}
-        <motion.div variants={itemVariants} className="bg-white rounded-xl shadow-md p-6 mb-8">
+    <div className="min-h-screen w-full bg-gradient-to-br from-blue-50 to-white p-8">
+      <div className="max-w-6xl mx-auto space-y-8">
+        {/* XP and Level Overview */}
+        <motion.div 
+          className="bg-white rounded-2xl shadow-lg p-6"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+        >
           <div className="flex items-center justify-between mb-4">
-            <div>
-              <h2 className="text-xl font-bold text-gray-800">Level {stats.currentLevel}</h2>
-              <p className="text-gray-600">
-                {stats.currentLevelXP} / {stats.nextLevelXP} XP to next level
-              </p>
+            <div className="flex items-center">
+              <Trophy className="w-10 h-10 text-blue-600 mr-4" />
+              <div>
+                <h2 className="text-2xl font-bold text-gray-800">
+                  Level {gamificationData?.level}
+                </h2>
+                <p className="text-gray-600">
+                  {gamificationData?.totalXP} / {xpForNextLevel} XP
+                </p>
+              </div>
             </div>
-            <div className="p-3 bg-yellow-50 rounded-full">
-              <Crown className="w-6 h-6 text-yellow-600" />
+            <div className="flex items-center text-green-600">
+              <ArrowUp className="w-6 h-6 mr-2" />
+              <span className="font-semibold">
+                {Math.round(xpProgressPercentage)}% to Next Level
+              </span>
             </div>
           </div>
-          <div className="w-full bg-gray-200 rounded-full h-3">
-            <div
-              className="bg-yellow-500 rounded-full h-3 transition-all duration-500"
-              style={{ width: `${(stats.currentLevelXP / stats.nextLevelXP) * 100}%` }}
+          
+          {/* XP Progress Bar */}
+          <div className="w-full bg-blue-100 rounded-full h-4 overflow-hidden">
+            <motion.div 
+              className="bg-blue-600 h-full rounded-full"
+              initial={{ width: 0 }}
+              animate={{ width: `${xpProgressPercentage}%` }}
+              transition={{ duration: 1, type: 'spring' }}
             />
           </div>
         </motion.div>
 
-        {/* Filters */}
-        <div className="flex flex-wrap gap-4 mb-8">
-          <button
-            onClick={() => setFilter('all')}
-            className={`px-4 py-2 rounded-lg transition-colors ${
-              filter === 'all' ? 'bg-blue-600 text-white' : 'bg-white text-gray-600 hover:bg-gray-100'
-            }`}
-          >
-            All
-          </button>
-          <button
-            onClick={() => setFilter('academic')}
-            className={`px-4 py-2 rounded-lg transition-colors ${
-              filter === 'academic' ? 'bg-blue-600 text-white' : 'bg-white text-gray-600 hover:bg-gray-100'
-            }`}
-          >
-            Academic
-          </button>
-          <button
-            onClick={() => setFilter('skill')}
-            className={`px-4 py-2 rounded-lg transition-colors ${
-              filter === 'skill' ? 'bg-blue-600 text-white' : 'bg-white text-gray-600 hover:bg-gray-100'
-            }`}
-          >
-            Skills
-          </button>
-          <button
-            onClick={() => setFilter('milestone')}
-            className={`px-4 py-2 rounded-lg transition-colors ${
-              filter === 'milestone' ? 'bg-blue-600 text-white' : 'bg-white text-gray-600 hover:bg-gray-100'
-            }`}
-          >
-            Milestones
-          </button>
-        </div>
-
         {/* Achievements Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredAchievements.map((achievement) => (
-            <motion.div
-              key={achievement.id}
-              variants={itemVariants}
-              className="bg-white rounded-xl shadow-md overflow-hidden hover:shadow-lg transition-shadow"
-            >
-              <div className={`p-4 ${getRarityColor(achievement.rarity)}`}>
-                <div className="flex items-center justify-between">
-                  {getIconComponent(achievement.icon)}
-                  <span className="text-sm font-medium capitalize">{achievement.rarity}</span>
+        <motion.div 
+          className="grid md:grid-cols-3 gap-6"
+          initial="hidden"
+          animate="visible"
+          variants={{
+            hidden: { opacity: 0 },
+            visible: {
+              opacity: 1,
+              transition: {
+                delayChildren: 0.3,
+                staggerChildren: 0.2
+              }
+            }
+          }}
+        >
+          {/* Courses Achievement */}
+          <motion.div 
+            className="bg-white rounded-2xl shadow-lg p-6"
+            variants={{
+              hidden: { opacity: 0, y: 20 },
+              visible: { opacity: 1, y: 0 }
+            }}
+          >
+            <div className="flex items-center mb-4">
+              <BookOpen className="w-8 h-8 text-green-600 mr-4" />
+              <h3 className="text-xl font-bold text-gray-800">Courses</h3>
+            </div>
+            <div className="w-full bg-green-100 rounded-full h-4 mb-2 overflow-hidden">
+              <div 
+                className="bg-green-600 h-full rounded-full" 
+                style={{ width: `${Math.min(gamificationData?.achievements.courses * 10, 100)}%` }}
+              />
+            </div>
+            <p className="text-gray-600">
+              {gamificationData?.achievements.courses} Courses Completed
+            </p>
+          </motion.div>
+
+          {/* Quizzes Achievement */}
+          <motion.div 
+            className="bg-white rounded-2xl shadow-lg p-6"
+            variants={{
+              hidden: { opacity: 0, y: 20 },
+              visible: { opacity: 1, y: 0 }
+            }}
+          >
+            <div className="flex items-center mb-4">
+              <Trophy className="w-8 h-8 text-blue-600 mr-4" />
+              <h3 className="text-xl font-bold text-gray-800">Quizzes</h3>
+            </div>
+            <div className="w-full bg-blue-100 rounded-full h-4 mb-2 overflow-hidden">
+              <div 
+                className="bg-blue-600 h-full rounded-full" 
+                style={{ width: `${Math.min(gamificationData?.achievements.quizzes * 10, 100)}%` }}
+              />
+            </div>
+            <p className="text-gray-600">
+              {gamificationData?.achievements.quizzes} Quizzes Completed
+            </p>
+          </motion.div>
+
+          {/* AI Interactions Achievement */}
+          <motion.div 
+            className="bg-white rounded-2xl shadow-lg p-6"
+            variants={{
+              hidden: { opacity: 0, y: 20 },
+              visible: { opacity: 1, y: 0 }
+            }}
+          >
+            <div className="flex items-center mb-4">
+              <Zap className="w-8 h-8 text-purple-600 mr-4" />
+              <h3 className="text-xl font-bold text-gray-800">AI Interactions</h3>
+            </div>
+            <div className="w-full bg-purple-100 rounded-full h-4 mb-2 overflow-hidden">
+              <div 
+                className="bg-purple-600 h-full rounded-full" 
+                style={{ width: `${Math.min(gamificationData?.achievements.aiInteractions * 10, 100)}%` }}
+              />
+            </div>
+            <p className="text-gray-600">
+              {gamificationData?.achievements.aiInteractions} AI Interactions
+            </p>
+          </motion.div>
+        </motion.div>
+
+        {/* Badges Section */}
+        {gamificationData?.badges.length > 0 && (
+          <motion.div 
+            className="bg-white rounded-2xl shadow-lg p-6"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+          >
+            <h3 className="text-2xl font-bold text-gray-800 mb-6">
+              Earned Badges
+            </h3>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              {gamificationData?.badges.map((badge, index) => (
+                <div 
+                  key={index} 
+                  className="flex flex-col items-center bg-gray-100 p-4 rounded-lg"
+                >
+                  <img 
+                    src={badge.icon} 
+                    alt={badge.name} 
+                    className="w-16 h-16 mb-2"
+                  />
+                  <h4 className="font-semibold text-gray-800">{badge.name}</h4>
+                  <p className="text-gray-600 text-sm text-center">
+                    {badge.description}
+                  </p>
                 </div>
-              </div>
-              <div className="p-6">
-                <h3 className="text-lg font-semibold text-gray-800 mb-2">{achievement.title}</h3>
-                <p className="text-gray-600 mb-4">{achievement.description}</p>
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between text-sm">
-                    <span className="text-gray-600">Progress</span>
-                    <span className="font-medium text-blue-600">
-                      {achievement.progress}/{achievement.maxProgress}
-                    </span>
-                  </div>
-                  <div className="w-full bg-gray-200 rounded-full h-2">
-                    <div
-                      className="bg-blue-600 rounded-full h-2 transition-all duration-500"
-                      style={{ width: `${(achievement.progress / achievement.maxProgress) * 100}%` }}
-                    />
-                  </div>
-                  <div className="flex items-center justify-between text-sm">
-                    <span className="text-gray-600">XP Reward</span>
-                    <span className="font-medium text-green-600">+{achievement.xpPoints} XP</span>
-                  </div>
-                  {achievement.dateEarned && (
-                    <div className="flex items-center justify-between text-sm">
-                      <span className="text-gray-600">Earned</span>
-                      <span className="font-medium text-purple-600">{achievement.dateEarned}</span>
-                    </div>
-                  )}
-                </div>
-              </div>
-            </motion.div>
-          ))}
-        </div>
-      </motion.div>
+              ))}
+            </div>
+          </motion.div>
+        )}
+      </div>
     </div>
   );
 }

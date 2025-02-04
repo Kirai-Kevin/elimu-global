@@ -1,8 +1,12 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
+import axios from 'axios';
 import { config } from '../config/env';
 import { Book, Users } from 'react-feather';
+
+// Configure axios base URL
+axios.defaults.baseURL = import.meta.env.VITE_BACKEND_URL;
 
 function LoginSignUp() {
   const navigate = useNavigate();
@@ -10,58 +14,181 @@ function LoginSignUp() {
   const [formData, setFormData] = useState({
     name: '',
     email: '',
-    phone: '',
-    curriculum: '',
-    form: '',
-    preferences: '',
+    password: ''
+  });
+  const [errors, setErrors] = useState({
+    name: '',
+    email: '',
     password: '',
+    general: ''
   });
 
+  // State for password visibility
+  const [showPassword, setShowPassword] = useState(false);
+
+  // Toggle password visibility
+  const togglePasswordVisibility = () => {
+    setShowPassword(!showPassword);
+  };
+
+  const validateForm = () => {
+    const newErrors = {
+      name: '',
+      email: '',
+      password: '',
+      general: ''
+    };
+
+    // Name validation (only for registration)
+    if (!isLogin && !formData.name.trim()) {
+      newErrors.name = 'Name is required';
+    }
+
+    // Email validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!formData.email.trim()) {
+      newErrors.email = 'Email is required';
+    } else if (!emailRegex.test(formData.email)) {
+      newErrors.email = 'Invalid email format';
+    }
+
+    // Password validation
+    if (!formData.password.trim()) {
+      newErrors.password = 'Password is required';
+    } else if (formData.password.length < 6) {
+      newErrors.password = 'Password must be at least 6 characters long';
+    }
+
+    setErrors(newErrors);
+
+    // Return true if no errors
+    return !Object.values(newErrors).some(error => error !== '');
+  };
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+    const { name, value } = e.target;
+    setFormData(prev => ({ 
+      ...prev, 
+      [name]: value 
+    }));
+
+    // Clear the specific error when user starts typing
+    if (errors[name as keyof typeof errors]) {
+      setErrors(prev => ({
+        ...prev,
+        [name]: ''
+      }));
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setErrors({
+      name: '',
+      email: '',
+      password: '',
+      general: ''
+    });
+
+    // Validate form before submission
+    if (!validateForm()) {
+      return;
+    }
 
     try {
-      const response = await fetch('https://centralize-auth-elimu.onrender.com/auth/login/student', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
+      let response;
+      if (isLogin) {
+        // Login route
+        response = await axios.post('/auth/login/student', {
           email: formData.email,
           password: formData.password,
-        }),
-      });
+        });
+      } else {
+        // Registration route
+        response = await axios.post('/auth/register/student', {
+          name: formData.name,
+          email: formData.email,
+          password: formData.password
+        });
+      }
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        console.error('Login failed:', errorData);
-        // Handle login error (e.g., show an error message)
+      // Log the full response for debugging
+      console.log('Full Response:', response);
+
+      // Determine success based on login or registration
+      const isSuccess = isLogin 
+        ? response.data.access_token 
+        : response.data.token;
+
+      if (!isSuccess) {
+        const errorData = response.data;
+        console.error(isLogin ? 'Login failed:' : 'Registration failed:', errorData);
+        setErrors(prev => ({
+          ...prev,
+          general: errorData.message || 'Authentication failed'
+        }));
         return;
       }
 
-      const data = await response.json();
+      // Store auth token - handle both login and registration responses
+      const token = isLogin ? response.data.access_token : response.data.token;
+      if (!token) {
+        console.error('No token received from server');
+        setErrors(prev => ({
+          ...prev,
+          general: 'Authentication failed - no token received'
+        }));
+        return;
+      }
+
+      // Store the token
+      localStorage.setItem('userToken', token);
       
-      // Store auth token
-      localStorage.setItem('userToken', data.token);
-      
-      // Store user data in localStorage
-      localStorage.setItem('user', JSON.stringify({
-        ...data.user,
-        token: data.token,
+      // Store user data
+      const userData = {
+        ...(isLogin ? response.data.user : response.data),
+        token: token,
         expiryTime: new Date(Date.now() + 24 * 60 * 60 * 1000) // 24 hours from now
-      }));
+      };
       
-      // Clear any previously selected plan
+      localStorage.setItem('user', JSON.stringify(userData));
+      
+      // Clear any previously selected plan if needed
       localStorage.removeItem('selectedPlan');
 
-      navigate('/all-students');
-    } catch (error) {
-      console.error('Error during login:', error);
-      // Handle network errors or other exceptions
+      // Set axios default authorization header
+      axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+
+      // Navigate based on login or registration
+      navigate(isLogin ? '/dashboard' : '/onboarding');
+    } catch (error: any) {
+      console.error(isLogin ? 'Error during login:' : 'Error during registration:', error);
+      
+      // Check if it's an Axios error with a response
+      if (error.response) {
+        // The request was made and the server responded with a status code
+        // that falls out of the range of 2xx
+        const errorMessage = error.response.data.message || 
+                             error.response.data.error || 
+                             (isLogin ? 'Login failed' : 'Registration failed');
+        setErrors(prev => ({
+          ...prev,
+          general: errorMessage
+        }));
+        console.error('Detailed error:', error.response.data);
+      } else if (error.request) {
+        // The request was made but no response was received
+        setErrors(prev => ({
+          ...prev,
+          general: 'No response received from server'
+        }));
+      } else {
+        // Something happened in setting up the request that triggered an Error
+        setErrors(prev => ({
+          ...prev,
+          general: 'Error in request setup'
+        }));
+      }
     }
   };
 
@@ -79,11 +206,11 @@ function LoginSignUp() {
   };
 
   return (
-    <div className="min-h-screen w-full flex items-center justify-center bg-gradient-to-br from-blue-400 via-blue-500 to-blue-600 overflow-y-auto">
-      <div className="container mx-auto flex items-center justify-center px-4">
+    <div className="min-h-screen w-screen flex items-center justify-center bg-gradient-to-br from-blue-400 via-blue-500 to-blue-600 overflow-hidden">
+      <div className="flex items-center justify-center">
         {/* Login/Signup Card */}
         <motion.div 
-          className="w-full max-w-md bg-white rounded-2xl shadow-2xl overflow-hidden"
+          className="max-w-md bg-white rounded-2xl shadow-2xl overflow-hidden"
           variants={containerVariants}
           initial="hidden"
           animate="visible"
@@ -106,55 +233,12 @@ function LoginSignUp() {
                     <input
                       type="text"
                       name="name"
-                      placeholder="Full Name"
+                      placeholder="Name"
                       onChange={handleChange}
-                      className="w-full p-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                      className="w-full p-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 text-black"
                       required
                     />
-                  </div>
-                  <div>
-                    <input
-                      type="tel"
-                      name="phone"
-                      placeholder="Phone Number"
-                      onChange={handleChange}
-                      className="w-full p-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
-                      required
-                    />
-                  </div>
-                  <div>
-                    <select
-                      name="curriculum"
-                      onChange={handleChange}
-                      className="w-full p-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 bg-white"
-                      required
-                    >
-                      <option value="">Select Curriculum</option>
-                      <option value="844">844</option>
-                      <option value="CBC">CBC</option>
-                      <option value="British">British</option>
-                      <option value="American">American</option>
-                    </select>
-                  </div>
-                  <div>
-                    <input
-                      type="text"
-                      name="form"
-                      placeholder="Form/Class"
-                      onChange={handleChange}
-                      className="w-full p-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
-                      required
-                    />
-                  </div>
-                  <div>
-                    <input
-                      type="text"
-                      name="preferences"
-                      placeholder="Learning Preferences (e.g., Math, Science)"
-                      onChange={handleChange}
-                      className="w-full p-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
-                      required
-                    />
+                    {errors.name && <div className="text-red-500 text-sm">{errors.name}</div>}
                   </div>
                 </>
               )}
@@ -164,20 +248,30 @@ function LoginSignUp() {
                   name="email"
                   placeholder="Email Address"
                   onChange={handleChange}
-                  className="w-full p-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                  className="w-full p-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 text-black"
                   required
                 />
+                {errors.email && <div className="text-red-500 text-sm">{errors.email}</div>}
               </div>
-              <div>
+              <div className="relative">
                 <input
-                  type="password"
+                  type={showPassword ? 'text' : 'password'}
                   name="password"
                   placeholder="Password"
                   onChange={handleChange}
-                  className="w-full p-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                  className="w-full p-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 text-black pr-16"
                   required
                 />
+                <button
+                  type="button"
+                  onClick={togglePasswordVisibility}
+                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700 transition-colors"
+                >
+                  {showPassword ? 'Hide' : 'Show'}
+                </button>
+                {errors.password && <div className="text-red-500 text-sm mt-1">{errors.password}</div>}
               </div>
+              {errors.general && <div className="text-red-500 text-sm">{errors.general}</div>}
               <motion.button
                 type="submit"
                 className="w-full bg-gradient-to-r from-blue-500 to-blue-600 text-white py-3 px-6 rounded-xl font-semibold hover:from-blue-600 hover:to-blue-700 transition-all duration-200 shadow-md"

@@ -1,40 +1,51 @@
 import React, { useState, useEffect } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useParams, useNavigate } from 'react-router-dom';
-import { FreeCourseService, FreeCourse } from '../../services/freeCourseService';
+import { FreeCourse } from '../../services/freeCourseService';
+import FreeCourseService from '../../services/freeCourseService';
 import { 
   Book, 
   BookOpen, 
   GraduationCap, 
   ChevronRight,
+  AlertCircle,
+  ExternalLink,
+  Video,
   Clock,
   Users,
   Star,
   ArrowLeft,
-  FileText
+  FileText,
+  Play,
+  CheckCircle,
+  TrendingUp
 } from 'lucide-react';
 
 const CourseDetail: React.FC = () => {
   const { courseId } = useParams<{ courseId: string }>();
   const navigate = useNavigate();
+  
   const [course, setCourse] = useState<FreeCourse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [pdfContent, setPdfContent] = useState<string | null>(null);
+  const [activeSection, setActiveSection] = useState<'overview' | 'curriculum' | 'instructor'>('overview');
 
   useEffect(() => {
     const fetchCourseDetails = async () => {
-      try {
-        if (courseId) {
-          const courseDetails = await FreeCourseService.getCourseById(courseId);
-          setCourse(courseDetails);
+      if (!courseId) {
+        setError('No course ID provided');
+        setLoading(false);
+        return;
+      }
 
-          // Fetch PDF content if available
-          const pdfText = await FreeCourseService.getPDFContent(courseId);
-          setPdfContent(pdfText);
-        }
-      } catch (err) {
+      try {
+        setLoading(true);
+        setError(null);
+        const courseDetails = await FreeCourseService.getCourseById(courseId);
+        setCourse(courseDetails);
+      } catch (err: any) {
         console.error('Error fetching course details:', err);
-        setError('Failed to load course details');
+        setError(err.response?.data?.message || err.message || 'Failed to load course details');
       } finally {
         setLoading(false);
       }
@@ -43,133 +54,219 @@ const CourseDetail: React.FC = () => {
     fetchCourseDetails();
   }, [courseId]);
 
-  if (loading) return <div>Loading course details...</div>;
-  if (error) return <div>{error}</div>;
-  if (!course) return <div>Course not found</div>;
+  const handleStartCourse = () => {
+    // Log course details before navigation
+    console.log('Starting course with ID:', courseId);
+    console.log('Current course details:', course);
+
+    // Validate course ID before navigation
+    if (!courseId) {
+      console.error('Cannot start course: No course ID available');
+      // Optional: Show an error toast or alert
+      return;
+    }
+
+    // Navigate to learning mode
+    navigate(`/learning/${courseId}`);
+  };
+
+  if (loading) return (
+    <motion.div 
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      className="flex justify-center items-center h-screen bg-gray-50"
+    >
+      <motion.div
+        animate={{ 
+          scale: [1, 1.2, 1],
+          rotate: [0, 10, -10, 0]
+        }}
+        transition={{ 
+          repeat: Infinity, 
+          duration: 1 
+        }}
+        className="text-4xl font-bold text-blue-500 flex items-center"
+      >
+        <BookOpen className="mr-2" /> Loading Course Details...
+      </motion.div>
+    </motion.div>
+  );
+
+  if (error) return (
+    <motion.div 
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      className="flex justify-center items-center h-screen bg-red-50"
+    >
+      <div className="text-center p-6 bg-white rounded-lg shadow-md max-w-md w-full">
+        <AlertCircle className="mx-auto mb-4 text-red-500" size={64} />
+        <h2 className="text-2xl font-bold text-red-700 mb-2">Oops! Something Went Wrong</h2>
+        <p className="text-gray-600 mb-4">{error}</p>
+        <motion.button
+          whileTap={{ scale: 0.95 }}
+          onClick={() => navigate('/free-courses')}
+          className="px-6 py-3 bg-blue-500 text-white rounded-full 
+            hover:bg-blue-600 transition flex items-center justify-center mx-auto"
+        >
+          <ArrowLeft className="mr-2" /> Back to Courses
+        </motion.button>
+      </div>
+    </motion.div>
+  );
+
+  if (!course) return null;
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <button 
-        onClick={() => navigate('/free-courses')}
-        className="mb-4 flex items-center text-gray-600 hover:text-gray-800"
-      >
-        <ArrowLeft className="mr-2" /> Back to Courses
-      </button>
+    <motion.div 
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.5 }}
+      className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8"
+    >
+      <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-8">
+        {/* Left Column - Course Image and Actions */}
+        <div className="lg:col-span-1 space-y-6">
+          {/* Course Image */}
+          <motion.div 
+            initial={{ scale: 0.9, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            className="bg-gradient-to-br from-blue-400 to-purple-600 
+              rounded-2xl overflow-hidden shadow-lg 
+              h-64 flex items-center justify-center"
+          >
+            <BookOpen className="text-white" size={96} />
+          </motion.div>
 
-      <div className="grid md:grid-cols-3 gap-8">
-        {/* Course Overview */}
-        <div className="md:col-span-2">
-          <h1 className="text-3xl font-bold mb-4">{course.title}</h1>
-          <p className="text-gray-600 mb-6">{course.description}</p>
+          {/* Course Meta Information */}
+          <div className="bg-white rounded-2xl shadow-md p-6 space-y-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-2 text-gray-600">
+                <Clock size={20} />
+                <span>{course.estimatedHours || '10'} Hours</span>
+              </div>
+              <div className="flex items-center space-x-2 text-gray-600">
+                <TrendingUp size={20} />
+                <span>{course.difficulty || 'Beginner'}</span>
+              </div>
+            </div>
 
-          {/* Learning Objectives */}
-          <div className="mb-6">
-            <h2 className="text-xl font-semibold mb-3">What You'll Learn</h2>
-            <ul className="space-y-2">
-              {course.learningObjectives?.map((objective, index) => (
-                <li key={index} className="flex items-start space-x-2">
-                  <ChevronRight className="text-blue-500 mt-1" size={16} />
-                  <span>{objective}</span>
-                </li>
-              ))}
-            </ul>
+            {/* Start Course Button */}
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={handleStartCourse}
+              className="w-full bg-blue-500 text-white 
+                py-3 rounded-full 
+                flex items-center justify-center 
+                space-x-2 
+                hover:bg-blue-600 
+                transition-colors duration-300"
+            >
+              <Play size={20} />
+              <span>Start Learning</span>
+            </motion.button>
+          </div>
+        </div>
+
+        {/* Right Column - Course Details */}
+        <div className="lg:col-span-2 bg-white rounded-2xl shadow-md p-8">
+          {/* Course Title and Description */}
+          <div className="mb-8">
+            <h1 className="text-3xl font-bold text-gray-800 mb-4">
+              {course.title}
+            </h1>
+            <p className="text-gray-600 leading-relaxed">
+              {course.description}
+            </p>
           </div>
 
-          {/* Course Modules */}
-          <div>
-            <h2 className="text-xl font-semibold mb-3">Course Modules</h2>
-            {course.modules && course.modules.length > 0 ? (
-              <div className="space-y-4">
-                {course.modules.map((module, index) => (
-                  <div key={index} className="bg-white border rounded-lg p-4">
-                    <div className="flex justify-between items-center mb-2">
-                      <h3 className="font-semibold">{module.title || `Module ${index + 1}`}</h3>
-                      <span className="text-sm text-gray-500">{module.duration || 'Not specified'}</span>
-                    </div>
-                    {module.topics && module.topics.length > 0 && (
-                      <div className="mt-2">
-                        <p className="text-xs text-gray-400 mb-1">Topics:</p>
-                        <div className="flex flex-wrap gap-1">
-                          {module.topics.map((topic, topicIndex) => (
-                            <span 
-                              key={topicIndex} 
-                              className="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded"
-                            >
-                              {topic}
-                            </span>
-                          ))}
-                        </div>
-                      </div>
-                    )}
+          {/* Navigation Tabs */}
+          <div className="flex border-b mb-6">
+            {['overview', 'curriculum', 'instructor'].map(section => (
+              <button
+                key={section}
+                onClick={() => setActiveSection(section as any)}
+                className={`px-4 py-2 text-sm font-medium 
+                  ${activeSection === section 
+                    ? 'text-blue-600 border-b-2 border-blue-600' 
+                    : 'text-gray-500 hover:text-gray-700'}`}
+              >
+                {section.charAt(0).toUpperCase() + section.slice(1)}
+              </button>
+            ))}
+          </div>
+
+          {/* Dynamic Content Sections */}
+          <AnimatePresence mode="wait">
+            {activeSection === 'overview' && (
+              <motion.div
+                key="overview"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="space-y-4"
+              >
+                <div className="flex items-center space-x-2">
+                  <CheckCircle className="text-green-500" />
+                  <h3 className="font-semibold">Learning Objectives</h3>
+                </div>
+                <ul className="list-disc list-inside text-gray-600">
+                  {course.learningObjectives?.map((obj, index) => (
+                    <li key={index}>{obj}</li>
+                  ))}
+                </ul>
+              </motion.div>
+            )}
+
+            {activeSection === 'curriculum' && (
+              <motion.div
+                key="curriculum"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="space-y-4"
+              >
+                <div className="flex items-center space-x-2">
+                  <FileText className="text-blue-500" />
+                  <h3 className="font-semibold">Course Modules</h3>
+                </div>
+                {course.modules?.map((module, index) => (
+                  <div 
+                    key={index} 
+                    className="bg-gray-50 p-4 rounded-lg flex items-center justify-between"
+                  >
+                    <span>{module.title}</span>
+                    <span className="text-sm text-gray-500">{module.duration}</span>
                   </div>
                 ))}
-              </div>
-            ) : (
-              <p className="text-gray-500 italic">No module details available</p>
+              </motion.div>
             )}
-          </div>
 
-          {/* PDF Content Section */}
-          {pdfContent && (
-            <div className="mt-8 bg-gray-50 rounded-lg p-6">
-              <h2 className="text-xl font-semibold mb-4 flex items-center">
-                <FileText className="mr-2 text-blue-500" size={24} />
-                Additional Course Information
-              </h2>
-              <div 
-                className="prose prose-sm max-h-96 overflow-y-auto bg-white p-4 rounded-md text-gray-700"
-                style={{ whiteSpace: 'pre-wrap', wordWrap: 'break-word' }}
+            {activeSection === 'instructor' && (
+              <motion.div
+                key="instructor"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="space-y-4"
               >
-                {pdfContent}
-              </div>
-            </div>
-          )}
-        </div>
-
-        {/* Sidebar */}
-        <div>
-          <div className="bg-white border rounded-lg p-6 sticky top-8">
-            <div className="flex justify-between items-center mb-4">
-              <div className="flex items-center space-x-2">
-                <GraduationCap className="text-green-600" size={24} />
-                <span className="font-semibold">{course.difficulty}</span>
-              </div>
-              <div className="flex items-center space-x-2">
-                <Clock className="text-purple-600" size={24} />
-                <span>{course.estimatedHours} hours</span>
-              </div>
-            </div>
-
-            <div className="flex justify-between items-center mb-4">
-              <div className="flex items-center space-x-2">
-                <Star className="text-yellow-500" size={24} />
-                <span>{course.rating?.toFixed(1)}</span>
-              </div>
-              <div className="flex items-center space-x-2">
-                <Users className="text-blue-600" size={24} />
-                <span>{course.enrollmentCount} enrolled</span>
-              </div>
-            </div>
-
-            <div>
-              <h3 className="text-lg font-semibold mb-2">Instructor</h3>
-              <div className="flex items-center space-x-3">
-                <div>
-                  <p className="font-medium">{course.instructor?.name || 'Elimu Global Instructor'}</p>
-                  <p className="text-sm text-gray-500">{course.instructor?.title || 'Course Facilitator'}</p>
+                <div className="flex items-center space-x-4">
+                  <div className="w-16 h-16 bg-gray-200 rounded-full 
+                    flex items-center justify-center">
+                    <Users className="text-gray-500" />
+                  </div>
+                  <div>
+                    <h3 className="font-semibold">{course.instructor?.name}</h3>
+                    <p className="text-gray-600">{course.instructor?.title}</p>
+                  </div>
                 </div>
-              </div>
-            </div>
-
-            <button 
-              className="w-full mt-6 py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition"
-            >
-              Start Course
-            </button>
-          </div>
+                <p className="text-gray-600">{course.instructor?.bio}</p>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
       </div>
-    </div>
+    </motion.div>
   );
 };
 

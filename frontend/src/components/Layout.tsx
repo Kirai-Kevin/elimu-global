@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { HomeIcon, UserIcon, AwardIcon, VideoIcon, BookOpenIcon, CalendarIcon, FolderIcon, LibraryIcon, BarChartIcon, MoreHorizontalIcon, MenuIcon, XIcon, LogOut, BookIcon, PlayIcon } from 'lucide-react';
+import { HomeIcon, UserIcon, AwardIcon, VideoIcon, BookOpenIcon, FolderIcon, LibraryIcon, BarChartIcon, MoreHorizontalIcon, MenuIcon, XIcon, LogOut, BookIcon, PlayIcon, ClipboardListIcon, MessageCircle } from 'lucide-react';
 import ChatBot from './ChatBot';
 
 const sidebarItems = [
@@ -9,19 +9,14 @@ const sidebarItems = [
   { name: 'Select Instructor', icon: UserIcon, path: '/dashboard/select-instructor' },
   { name: 'Achievements', icon: AwardIcon, path: '/dashboard/achievements' },
   { name: 'Classes', icon: VideoIcon, path: '/dashboard/classes' },
-  { name: 'Schedule', icon: CalendarIcon, path: '/dashboard/schedule' },
-  { name: 'Assignments', icon: BookOpenIcon, path: '/dashboard/assignments' },
   { name: 'Lessons', icon: BookOpenIcon, path: '/dashboard/lessons' },
-  { name: 'Resources', icon: FolderIcon, path: '/dashboard/resources' },
-  { name: 'Calendar', icon: CalendarIcon, path: '/dashboard/calendar' },
-  { name: 'Materials', icon: FolderIcon, path: '/dashboard/materials' },
-  { name: 'Library', icon: LibraryIcon, path: '/dashboard/library' },
-  { name: 'Progress', icon: BarChartIcon, path: '/dashboard/progress' },
-  { name: 'More', icon: MoreHorizontalIcon, path: '/dashboard/more' },
-  
+  { name: 'Quizzes', icon: ClipboardListIcon, path: '/dashboard/quizzes' },
+  { name: 'Assessments', icon: ClipboardListIcon, path: '/dashboard/assessment' },
+  { name: 'Interactive Resources', icon: MessageCircle, path: '/dashboard/interactive-resources' },
   // New Free Courses Section
   { name: 'All Free Courses', icon: BookIcon, path: '/free-courses' },
   { name: 'Featured Courses', icon: PlayIcon, path: '/featured-courses' },
+  { name: 'More', icon: MoreHorizontalIcon, path: '/dashboard/more' },
 ];
 
 function Layout() {
@@ -94,7 +89,8 @@ function Layout() {
 
         {/* Navigation */}
         <nav className="h-[calc(100vh-4rem)] px-4 py-6 space-y-2 overflow-y-auto scrollbar-thin scrollbar-thumb-blue-400 scrollbar-track-transparent">
-          {sidebarItems.map((item) => {
+          {sidebarItems.map((item, index) => {
+            if (item.name === 'More') return null;
             const isActive = location.pathname === item.path;
             return (
               <Link
@@ -111,6 +107,20 @@ function Layout() {
               </Link>
             );
           })}
+          <div className="flex-1" />
+          {sidebarItems.find((item) => item.name === 'More') && (
+            <Link
+              to={sidebarItems.find((item) => item.name === 'More').path}
+              className={`flex items-center w-full px-4 py-3 text-sm rounded-xl transition-all duration-200 ${
+                location.pathname === sidebarItems.find((item) => item.name === 'More').path
+                  ? 'bg-white/20 text-white font-semibold'
+                  : 'text-blue-100 hover:bg-white/10'
+              }`}
+            >
+              <MoreHorizontalIcon className="w-5 h-5 mr-3" />
+              More
+            </Link>
+          )}
           <button
             onClick={handleLogout}
             className="flex items-center w-full px-4 py-3 text-red-100 hover:bg-red-500/20 rounded-xl transition-colors"

@@ -1,334 +1,358 @@
-import { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
-import { BarChart3, Clock, Calendar, BookOpen, GraduationCap, Target, Award, Users, Book } from 'lucide-react';
-import { config } from '../config/env';
+import React, { useState, useEffect } from 'react';
+import axios from 'axios';
+import { motion, AnimatePresence } from 'framer-motion';
+import { 
+  BookOpen, 
+  Trophy, 
+  Flame, 
+  BookmarkCheck, 
+  ClipboardList, 
+  Target, 
+  Star, 
+  Award, 
+  Calendar, 
+  TrendingUp,
+  Rocket,
+  CheckCircle2,
+  Loader2,
+  AlertTriangle,
+  Users
+} from 'lucide-react';
 
-interface ProgressStats {
-  subject: string;
-  completedLessons: number;
-  totalLessons: number;
-  averageGrade: number;
+// Create axios instance with base URL from .env
+const apiClient = axios.create({
+  baseURL: import.meta.env.VITE_BACKEND_URL,
+  headers: {
+    'Content-Type': 'application/json',
+  }
+});
+
+// Dashboard Interfaces matching actual API response
+interface StudentDashboard {
+  _id: string;
+  studentId: string;
+  enrolledCourses: string[];
+  totalStreak: number;
+  lastUpdated: string;
+  createdAt: string;
+  updatedAt: string;
+  __v: number;
 }
 
-interface UpcomingClass {
-  id: number;
-  subject: string;
-  instructor: string;
-  date: string;
-  time: string;
-  duration: number;
-  zoomLink: string;
+interface DashboardOverview {
+  courses: any[];
+  learningPaths: any[];
+  quizzes: any[];
+  assignments: any[];
 }
 
-interface Lesson {
-  id: number;
-  title: string;
-  progress: number;
-  timeSpent: number;
-  grade: number | null;
+interface RecentActivity {
+  recentQuizzes: any[];
+  recentAssignments: any[];
+  recentCourseProgress: any[];
 }
 
-function MainDashboard() {
-  const [lessons, setLessons] = useState<Lesson[]>([]);
-  const [recommendations, setRecommendations] = useState<string[]>([]);
-  const [upcomingClasses, setUpcomingClasses] = useState<UpcomingClass[]>([]);
-  const [progressStats, setProgressStats] = useState<ProgressStats[]>([]);
+const MainDashboard: React.FC = () => {
+  // State for user data
+  const [userData, setUserData] = useState<{
+    id: string;
+    email: string;
+    name: string;
+    role: string;
+    token: string;
+  } | null>(null);
+  
+  // State for dashboard data
+  const [dashboardData, setDashboardData] = useState<StudentDashboard | null>(null);
+  const [overviewData, setOverviewData] = useState<DashboardOverview | null>(null);
+  const [recentActivity, setRecentActivity] = useState<RecentActivity | null>(null);
+  
+  // Loading and error states
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    // Fetch mock data
-    const mockData = {
-      lessons: [
-        { id: 1, title: 'Introduction to Algebra', progress: 75, timeSpent: 120, grade: 85 },
-        { id: 2, title: 'World History: Ancient Civilizations', progress: 50, timeSpent: 90, grade: null },
-        { id: 3, title: 'Biology: Cell Structure', progress: 25, timeSpent: 60, grade: 92 },
-      ],
-      upcomingClasses: [
-        {
-          id: 1,
-          subject: 'Mathematics',
-          instructor: 'Dr. John Smith',
-          date: '2024-12-23',
-          time: '09:00 AM',
-          duration: 60,
-          zoomLink: 'https://zoom.us/j/123456789'
-        },
-        {
-          id: 2,
-          subject: 'Physics',
-          instructor: 'Prof. Sarah Johnson',
-          date: '2024-12-23',
-          time: '11:00 AM',
-          duration: 45,
-          zoomLink: 'https://zoom.us/j/987654321'
-        }
-      ],
-      progressStats: [
-        { subject: 'Mathematics', completedLessons: 15, totalLessons: 20, averageGrade: 88 },
-        { subject: 'Science', completedLessons: 12, totalLessons: 18, averageGrade: 92 },
-        { subject: 'History', completedLessons: 8, totalLessons: 15, averageGrade: 85 },
-        { subject: 'English', completedLessons: 10, totalLessons: 12, averageGrade: 90 }
-      ]
-    };
+  // Default fallback data
+  const defaultDashboardData: StudentDashboard = {
+    _id: '',
+    studentId: '',
+    enrolledCourses: [],
+    totalStreak: 0,
+    lastUpdated: new Date().toISOString(),
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+    __v: 0
+  };
 
-    setLessons(mockData.lessons);
-    setUpcomingClasses(mockData.upcomingClasses);
-    setProgressStats(mockData.progressStats);
+  const defaultOverviewData: DashboardOverview = {
+    courses: [],
+    learningPaths: [],
+    quizzes: [],
+    assignments: []
+  };
 
-    // Fetch AI recommendations
-    const fetchRecommendations = async () => {
-      try {
-        const response = await fetch(config.apiUrl, {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${config.groqApiKey}`,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            model: 'mixtral-8x7b-32768',
-            messages: [
-              {
-                role: 'system',
-                content: 'You are an AI that provides personalized learning recommendations.',
-              },
-              {
-                role: 'user',
-                content: 'Provide 3 personalized learning recommendations based on current progress.',
-              },
-            ],
-          }),
-        });
+  const defaultRecentActivity: RecentActivity = {
+    recentQuizzes: [],
+    recentAssignments: [],
+    recentCourseProgress: []
+  };
 
-        if (!response.ok) throw new Error('Failed to get recommendations');
-        const data = await response.json();
-        setRecommendations(data.choices[0].message.content.split('\n').filter(Boolean));
-      } catch (error) {
-        console.error('Error getting recommendations:', error);
-        setRecommendations(['Focus on completing Algebra exercises', 'Review Biology notes', 'Practice History quizzes']);
-      }
-    };
-
-    fetchRecommendations();
-  }, []);
-
+  // Framer Motion Variants
   const containerVariants = {
     hidden: { opacity: 0 },
-    visible: {
-      opacity: 1,
-      transition: { staggerChildren: 0.1 }
+    visible: { 
+      opacity: 1, 
+      transition: { 
+        delayChildren: 0.3, 
+        staggerChildren: 0.2 
+      } 
     }
   };
 
   const itemVariants = {
     hidden: { y: 20, opacity: 0 },
-    visible: {
-      y: 0,
+    visible: { 
+      y: 0, 
       opacity: 1,
       transition: {
-        type: 'spring',
-        stiffness: 100
+        type: "spring",
+        damping: 12,
+        stiffness: 200
       }
     }
   };
 
-  return (
-    <div className="min-h-screen w-full bg-gray-50">
-      <motion.div
-        className="w-full px-4 py-8"
-        variants={containerVariants}
-        initial="hidden"
-        animate="visible"
-      >
-        {/* Welcome Section with Illustration */}
-        <div className="flex flex-col md:flex-row items-center justify-between mb-8 bg-white rounded-xl p-6 shadow-lg">
-          <div className="md:w-1/2 mb-6 md:mb-0">
-            <h1 className="text-3xl font-bold text-gray-800 mb-4">Welcome Back!</h1>
-            <p className="text-gray-600 mb-6">
-              Track your progress, manage your classes, and get personalized recommendations
-              to enhance your learning journey.
-            </p>
-            <div className="flex flex-wrap gap-4">
-              <div className="flex items-center bg-blue-50 px-4 py-2 rounded-lg">
-                <Target className="w-5 h-5 text-blue-600 mr-2" />
-                <span className="text-blue-600">Set Goals</span>
-              </div>
-              <div className="flex items-center bg-green-50 px-4 py-2 rounded-lg">
-                <Award className="w-5 h-5 text-green-600 mr-2" />
-                <span className="text-green-600">Track Progress</span>
-              </div>
-              <div className="flex items-center bg-purple-50 px-4 py-2 rounded-lg">
-                <Book className="w-5 h-5 text-purple-600 mr-2" />
-                <span className="text-purple-600">Learn Daily</span>
-              </div>
-            </div>
-          </div>
-          <div className="md:w-1/2 flex justify-center">
-            <img
-              src="/images/dashboard-illustration.svg"
-              alt="Dashboard Illustration"
-              className="w-full max-w-md h-auto"
-            />
-          </div>
-        </div>
+  useEffect(() => {
+    const fetchDashboardData = async () => {
+      try {
+        // Retrieve token from localStorage
+        const userString = localStorage.getItem('user');
+        if (!userString) {
+          console.error('No user data found in localStorage');
+          setError('No user data found');
+          setLoading(false);
+          return;
+        }
 
-        {/* Quick Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          {progressStats.map((stat, index) => (
-            <motion.div
-              key={stat.subject}
-              variants={itemVariants}
-              className="bg-white rounded-xl shadow-md p-6 hover:shadow-lg transition-shadow"
-            >
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-semibold text-gray-800">{stat.subject}</h3>
-                <div className="p-2 bg-blue-50 rounded-lg">
-                  <GraduationCap className="w-6 h-6 text-blue-600" />
-                </div>
-              </div>
-              <div className="space-y-2">
-                <div className="flex justify-between text-sm">
-                  <span className="text-gray-600">Progress</span>
-                  <span className="font-medium text-blue-600">
-                    {Math.round((stat.completedLessons / stat.totalLessons) * 100)}%
-                  </span>
-                </div>
-                <div className="w-full bg-gray-200 rounded-full h-2">
-                  <div
-                    className="bg-blue-600 rounded-full h-2"
-                    style={{
-                      width: `${(stat.completedLessons / stat.totalLessons) * 100}%`
-                    }}
-                  />
-                </div>
-                <div className="flex justify-between text-sm">
-                  <span className="text-gray-600">Average Grade</span>
-                  <span className="font-medium text-green-600">{stat.averageGrade}%</span>
-                </div>
-              </div>
-            </motion.div>
-          ))}
-        </div>
+        let parsedUserData;
+        try {
+          parsedUserData = JSON.parse(userString);
+          setUserData(parsedUserData);
+        } catch (parseError) {
+          console.error('Failed to parse user data:', parseError);
+          setError('Invalid user data');
+          setLoading(false);
+          return;
+        }
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Recent Lessons */}
-          <motion.div
-            variants={itemVariants}
-            className="lg:col-span-2 bg-white rounded-xl shadow-md p-6"
-          >
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-xl font-bold text-gray-800">Recent Lessons</h2>
-              <div className="p-2 bg-blue-50 rounded-lg">
-                <BookOpen className="w-6 h-6 text-blue-600" />
-              </div>
-            </div>
-            <div className="space-y-4">
-              {lessons.map((lesson) => (
-                <motion.div
-                  key={lesson.id}
-                  className="p-4 bg-gray-50 rounded-xl hover:bg-gray-100 transition-colors"
-                  whileHover={{ scale: 1.02 }}
-                >
-                  <div className="flex justify-between items-center mb-2">
-                    <h3 className="font-medium text-gray-800">{lesson.title}</h3>
-                    {lesson.grade && (
-                      <span className="px-3 py-1 bg-green-100 text-green-600 rounded-full text-sm">
-                        Grade: {lesson.grade}%
-                      </span>
-                    )}
-                  </div>
-                  <div className="flex items-center justify-between text-sm">
-                    <div className="flex items-center text-gray-600">
-                      <Clock className="w-4 h-4 mr-2" />
-                      {lesson.timeSpent} mins
-                    </div>
-                    <div className="flex items-center">
-                      <span className="text-gray-600 mr-2">Progress:</span>
-                      <div className="w-32 bg-gray-200 rounded-full h-2">
-                        <div
-                          className="bg-blue-600 rounded-full h-2"
-                          style={{ width: `${lesson.progress}%` }}
-                        />
-                      </div>
-                      <span className="ml-2 text-blue-600">{lesson.progress}%</span>
-                    </div>
-                  </div>
-                </motion.div>
-              ))}
-            </div>
-          </motion.div>
+        const token = parsedUserData?.token;
+        if (!token) {
+          console.error('No authentication token found');
+          setError('Authentication required');
+          setLoading(false);
+          return;
+        }
 
-          {/* Upcoming Classes */}
-          <motion.div
-            variants={itemVariants}
-            className="bg-white rounded-xl shadow-md p-6"
-          >
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-xl font-bold text-gray-800">Upcoming Classes</h2>
-              <div className="p-2 bg-blue-50 rounded-lg">
-                <Calendar className="w-6 h-6 text-blue-600" />
-              </div>
-            </div>
-            <div className="space-y-4">
-              {upcomingClasses.map((class_) => (
-                <motion.div
-                  key={class_.id}
-                  className="p-4 border border-gray-100 rounded-xl hover:border-blue-200 transition-colors"
-                  whileHover={{ scale: 1.02 }}
-                >
-                  <h3 className="font-medium text-gray-800 mb-2">{class_.subject}</h3>
-                  <div className="space-y-2 text-sm">
-                    <div className="flex items-center text-gray-600">
-                      <Users className="w-4 h-4 mr-2" />
-                      {class_.instructor}
-                    </div>
-                    <div className="flex items-center text-gray-600">
-                      <Calendar className="w-4 h-4 mr-2" />
-                      {class_.date} at {class_.time}
-                    </div>
-                    <div className="flex items-center text-gray-600">
-                      <Clock className="w-4 h-4 mr-2" />
-                      {class_.duration} minutes
-                    </div>
-                    <a
-                      href={class_.zoomLink}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-block w-full px-4 py-2 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 transition-colors text-center mt-2"
-                    >
-                      Join Class
-                    </a>
-                  </div>
-                </motion.div>
-              ))}
-            </div>
-          </motion.div>
-        </div>
+        // Fetch dashboard data with comprehensive error handling
+        try {
+          const dashboardResponse = await apiClient.get('/student/dashboard', {
+            headers: { 
+              'Authorization': `Bearer ${token}` 
+            }
+          });
+          
+          const dashboardData = dashboardResponse.data;
+          setDashboardData(dashboardData || defaultDashboardData);
+        } catch (dashboardError) {
+          console.error('Dashboard Fetch Error:', dashboardError);
+          setDashboardData(defaultDashboardData);
+        }
 
-        {/* AI Recommendations */}
-        <motion.div
+        // Fetch dashboard overview
+        try {
+          const overviewResponse = await apiClient.get('/student/dashboard/overview', {
+            headers: { 
+              'Authorization': `Bearer ${token}` 
+            }
+          });
+          
+          const overviewData = overviewResponse.data;
+          setOverviewData(overviewData || defaultOverviewData);
+        } catch (overviewError) {
+          console.error('Overview Fetch Error:', overviewError);
+          setOverviewData(defaultOverviewData);
+        }
+
+        // Fetch recent activity
+        try {
+          const activityResponse = await apiClient.get('/student/dashboard/recent-activity', {
+            headers: { 
+              'Authorization': `Bearer ${token}` 
+            }
+          });
+          
+          const activityData = activityResponse.data;
+          setRecentActivity(activityData || defaultRecentActivity);
+        } catch (activityError) {
+          console.error('Activity Fetch Error:', activityError);
+          setRecentActivity(defaultRecentActivity);
+        }
+      } catch (err) {
+        console.error('Complete Dashboard Fetch Error:', err);
+        setError(err instanceof Error ? err.message : 'Failed to load dashboard data');
+        
+        // Set default data in case of complete failure
+        setDashboardData(defaultDashboardData);
+        setOverviewData(defaultOverviewData);
+        setRecentActivity(defaultRecentActivity);
+      }
+    };
+
+    fetchDashboardData();
+  }, []);
+
+  // Set loading to false once we have data
+  useEffect(() => {
+    if (dashboardData && overviewData && recentActivity) {
+      setLoading(false);
+    }
+  }, [dashboardData, overviewData, recentActivity]);
+
+  // Render content
+  const renderContent = () => (
+    <motion.div 
+      initial="hidden"
+      animate="visible"
+      variants={containerVariants}
+      className="min-h-screen w-full bg-gray-50 p-8"
+    >
+      <motion.div className="max-w-6xl mx-auto">
+        <motion.h1 
           variants={itemVariants}
-          className="mt-6 bg-white rounded-xl shadow-md p-6"
+          className="text-3xl font-bold mb-8 flex items-center"
         >
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="text-xl font-bold text-gray-800">Personalized Recommendations</h2>
-            <div className="p-2 bg-blue-50 rounded-lg">
-              <Target className="w-6 h-6 text-blue-600" />
+          <Trophy className="mr-4 text-yellow-500" /> 
+          Welcome, {userData?.name?.split(' ')[0] || 'Student'}!
+        </motion.h1>
+
+        {/* User Overview */}
+        <motion.div 
+          variants={itemVariants}
+          className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8"
+        >
+          {/* Total Streak */}
+          <div className="bg-white p-6 rounded-lg shadow-md flex items-center">
+            <Flame className="mr-4 text-orange-500" size={48} />
+            <div>
+              <h3 className="text-lg font-semibold">Total Streak</h3>
+              <p className="text-2xl font-bold">
+                {dashboardData?.totalStreak || 0} Days
+              </p>
             </div>
           </div>
-          <div className="grid md:grid-cols-3 gap-4">
-            {recommendations.map((recommendation, index) => (
-              <motion.div
-                key={index}
-                className="p-4 bg-blue-50 rounded-xl"
-                whileHover={{ scale: 1.02 }}
-              >
-                <p className="text-blue-800">{recommendation}</p>
-              </motion.div>
-            ))}
+
+          {/* Total Courses */}
+          <div className="bg-white p-6 rounded-lg shadow-md flex items-center">
+            <BookOpen className="mr-4 text-green-500" size={48} />
+            <div>
+              <h3 className="text-lg font-semibold">Enrolled Courses</h3>
+              <p className="text-2xl font-bold">
+                {dashboardData?.enrolledCourses?.length || 0}
+              </p>
+            </div>
+          </div>
+
+          {/* Last Updated */}
+          <div className="bg-white p-6 rounded-lg shadow-md flex items-center">
+            <Calendar className="mr-4 text-blue-500" size={48} />
+            <div>
+              <h3 className="text-lg font-semibold">Last Updated</h3>
+              <p className="text-sm">
+                {dashboardData?.lastUpdated 
+                  ? new Date(dashboardData.lastUpdated).toLocaleDateString() 
+                  : 'Not available'}
+              </p>
+            </div>
+          </div>
+        </motion.div>
+
+        {/* Recent Activity Section */}
+        <motion.div 
+          variants={itemVariants}
+          className="bg-white shadow-lg rounded-lg p-6 mb-8"
+        >
+          <div className="flex items-center mb-6">
+            <TrendingUp className="mr-3 text-purple-500" />
+            <h2 className="text-xl font-semibold">Recent Activity</h2>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {/* Quizzes */}
+            <div className="bg-green-50 p-6 rounded-lg">
+              <div className="flex items-center mb-4">
+                <ClipboardList className="mr-3 text-green-500" />
+                <h3 className="font-semibold">Quizzes</h3>
+              </div>
+              <div className="text-center">
+                <p className="text-gray-500">
+                  No quizzes completed yet
+                </p>
+                <p className="text-sm text-gray-400 mt-2">
+                  Complete quizzes to track your progress
+                </p>
+              </div>
+            </div>
+
+            {/* Assignments */}
+            <div className="bg-blue-50 p-6 rounded-lg">
+              <div className="flex items-center mb-4">
+                <Award className="mr-3 text-blue-500" />
+                <h3 className="font-semibold">Assignments</h3>
+              </div>
+              <div className="text-center">
+                <p className="text-gray-500">
+                  No assignments submitted yet
+                </p>
+                <p className="text-sm text-gray-400 mt-2">
+                  Submit assignments to see them here
+                </p>
+              </div>
+            </div>
+
+            {/* Course Progress */}
+            <div className="bg-yellow-50 p-6 rounded-lg">
+              <div className="flex items-center mb-4">
+                <TrendingUp className="mr-3 text-yellow-500" />
+                <h3 className="font-semibold">Course Progress</h3>
+              </div>
+              <div className="text-center">
+                <p className="text-gray-500">
+                  No course progress yet
+                </p>
+                <p className="text-sm text-gray-400 mt-2">
+                  Start a course to track your progress
+                </p>
+              </div>
+            </div>
           </div>
         </motion.div>
       </motion.div>
-    </div>
+    </motion.div>
   );
-}
+
+  // Always render content, with loading indicator if needed
+  return (
+    <>
+      {renderContent()}
+      {loading && (
+        <div className="fixed top-0 left-0 w-full h-full flex items-center justify-center bg-black bg-opacity-50">
+          <div className="bg-white p-4 rounded-lg shadow-lg">
+            <Loader2 className="animate-spin" size={32} />
+            <p className="mt-2">Loading...</p>
+          </div>
+        </div>
+      )}
+    </>
+  );
+};
 
 export default MainDashboard;

@@ -1,248 +1,363 @@
-import { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
-import { Star, Search, BookOpen, Clock, Award, Users } from 'lucide-react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
+import { authenticatedGet } from '../utils/api';
+import { motion, AnimatePresence } from 'framer-motion';
+import { 
+  Star, Search, BookOpen, Clock, Award, Users, Info, AlertTriangle, 
+  BookmarkPlus, BookmarkCheck, X, ChevronRight, Menu, ArrowLeft, ArrowRight
+} from 'lucide-react';
+import { Course } from '../types/course';
+import { DEFAULT_USER_AVATAR } from '../utils/avatars';
 
 interface Instructor {
-  id: number;
-  name: string;
-  subjects: string[];
-  rating: number;
-  experience: string;
-  students: number;
-  availability: string;
-  imageUrl: string;
+  _id: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+  profilePicture?: string;
+  specialization: string;
+  socialLinks?: {
+    linkedin?: string;
+    twitter?: string;
+  };
+  courses?: Course[];
 }
 
 function SelectInstructor() {
   const [instructors, setInstructors] = useState<Instructor[]>([]);
   const [selectedSubject, setSelectedSubject] = useState<string>('');
   const [searchQuery, setSearchQuery] = useState<string>('');
+  const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
+  const [page, setPage] = useState<number>(1);
+  const [totalPages, setTotalPages] = useState<number>(1);
+  
+  // Mobile-specific states
+  const [isMobile, setIsMobile] = useState<boolean>(window.innerWidth <= 768);
+  const [isSidebarOpen, setIsSidebarOpen] = useState<boolean>(false);
+  const [activeView, setActiveView] = useState<'instructors' | 'courses'>('instructors');
 
+  // Instructor and Courses States
+  const [selectedInstructor, setSelectedInstructor] = useState<Instructor | null>(null);
+  const [instructorCourses, setInstructorCourses] = useState<Course[]>([]);
+  const [courseLoading, setCourseLoading] = useState<boolean>(false);
+  const [coursePagination, setCoursePagination] = useState({
+    total: 0,
+    page: 1,
+    totalPages: 0
+  });
+
+  // Responsive Design Handler
+  const handleResize = useCallback(() => {
+    const mobile = window.innerWidth <= 768;
+    setIsMobile(mobile);
+    
+    // Reset sidebar and view on resize
+    if (!mobile) {
+      setIsSidebarOpen(false);
+      setActiveView('instructors');
+    }
+  }, []);
+
+  // Add event listener for responsive design
+  useEffect(() => {
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, [handleResize]);
+
+  // Fetch Instructor Courses
+  const fetchInstructorCourses = async (instructorId: string) => {
+    try {
+      setCourseLoading(true);
+      const response = await authenticatedGet(`/instructors/${instructorId}/courses`, {
+        page: coursePagination.page,
+        limit: 10
+      });
+
+      setInstructorCourses(response.data.courses);
+      setCoursePagination({
+        total: response.data.total,
+        page: response.data.page,
+        totalPages: response.data.totalPages
+      });
+      setCourseLoading(false);
+
+      // For mobile, switch to courses view
+      if (isMobile) {
+        setActiveView('courses');
+        setIsSidebarOpen(true);
+      }
+    } catch (err) {
+      console.error('Courses fetch error:', err);
+      setCourseLoading(false);
+      setInstructorCourses([]);
+    }
+  };
+
+  const handleInstructorSelect = (instructor: Instructor) => {
+    setSelectedInstructor(instructor);
+    
+    // Use courses from the instructor if available, otherwise fetch
+    if (instructor.courses && instructor.courses.length > 0) {
+      setInstructorCourses(instructor.courses);
+    } else {
+      fetchInstructorCourses(instructor._id);
+    }
+  };
+
+  // Main Instructors Fetch
   useEffect(() => {
     const fetchInstructors = async () => {
-      const mockInstructors: Instructor[] = [
-        {
-          id: 1,
-          name: 'Dr. John Doe',
-          subjects: ['Mathematics', 'Physics'],
-          rating: 4.8,
-          experience: '8 years',
-          students: 120,
-          availability: 'Weekdays',
-          imageUrl: '/images/instructor1.jpg'
-        },
-        {
-          id: 2,
-          name: 'Prof. Jane Smith',
-          subjects: ['English', 'Literature'],
-          rating: 4.6,
-          experience: '10 years',
-          students: 150,
-          availability: 'Flexible',
-          imageUrl: '/images/instructor2.jpg'
-        },
-        {
-          id: 3,
-          name: 'Dr. Bob Johnson',
-          subjects: ['History', 'Geography'],
-          rating: 4.7,
-          experience: '6 years',
-          students: 90,
-          availability: 'Evenings',
-          imageUrl: '/images/instructor3.jpg'
-        },
-        {
-          id: 4,
-          name: 'Dr. Sarah Wilson',
-          subjects: ['Biology', 'Chemistry'],
-          rating: 4.9,
-          experience: '12 years',
-          students: 200,
-          availability: 'Weekends',
-          imageUrl: '/images/instructor4.jpg'
-        },
-        {
-          id: 5,
-          name: 'Prof. Michael Brown',
-          subjects: ['Computer Science', 'Mathematics'],
-          rating: 4.7,
-          experience: '9 years',
-          students: 130,
-          availability: 'Flexible',
-          imageUrl: '/images/instructor5.jpg'
-        },
-        {
-          id: 6,
-          name: 'Dr. Emily Davis',
-          subjects: ['Physics', 'Chemistry'],
-          rating: 4.8,
-          experience: '7 years',
-          students: 110,
-          availability: 'Weekdays',
-          imageUrl: '/images/instructor6.jpg'
-        },
-      ];
-      setInstructors(mockInstructors);
+      try {
+        const response = await authenticatedGet('/instructors', {
+          page,
+          limit: 9,
+          search: searchQuery,
+          sortBy: 'lastName',
+          includeCourses: true
+        });
+
+        const validInstructors = response.data.instructors.map((instructor: any) => ({
+          _id: instructor._id,
+          firstName: instructor.firstName || 'Unknown',
+          lastName: instructor.lastName || 'Instructor',
+          email: instructor.email,
+          specialization: instructor.specialization || 'No Specialization',
+          profilePicture: instructor.profilePicture,
+          socialLinks: instructor.socialLinks,
+          courses: instructor.courses || []
+        }));
+
+        setInstructors(validInstructors);
+        setTotalPages(response.data.totalPages);
+        setLoading(false);
+      } catch (err) {
+        console.error('Instructors fetch error:', err);
+        setError(err instanceof Error ? err.message : 'Failed to load instructors');
+        setLoading(false);
+      }
     };
 
     fetchInstructors();
-  }, []);
+  }, [page, searchQuery]);
 
-  const filteredInstructors = instructors.filter(instructor => {
-    const matchesSubject = selectedSubject ? instructor.subjects.includes(selectedSubject) : true;
-    const matchesSearch = searchQuery
-      ? instructor.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        instructor.subjects.some(subject => subject.toLowerCase().includes(searchQuery.toLowerCase()))
-      : true;
-    return matchesSubject && matchesSearch;
-  });
+  // Memoized filtered instructors
+  const filteredInstructors = useMemo(() => {
+    return instructors.filter(instructor => {
+      const matchesSubject = selectedSubject 
+        ? instructor.specialization.toLowerCase().includes(selectedSubject.toLowerCase())
+        : true;
+      const matchesSearch = searchQuery
+        ? `${instructor.firstName} ${instructor.lastName}`.toLowerCase().includes(searchQuery.toLowerCase())
+        : true;
+      return matchesSubject && matchesSearch;
+    });
+  }, [instructors, selectedSubject, searchQuery]);
 
-  const containerVariants = {
-    hidden: { opacity: 0 },
-    visible: {
-      opacity: 1,
-      transition: {
-        staggerChildren: 0.1
-      }
-    }
-  };
-
-  const itemVariants = {
-    hidden: { y: 20, opacity: 0 },
-    visible: {
-      y: 0,
-      opacity: 1,
-      transition: {
-        type: 'spring',
-        stiffness: 100
-      }
-    }
-  };
-
+  // Render Method
   return (
-    <div className="min-h-screen w-full bg-gray-50">
-      <motion.div
-        className="w-full px-4 py-8"
-        variants={containerVariants}
-        initial="hidden"
-        animate="visible"
-      >
-        {/* Header with Illustration */}
-        <div className="flex flex-col md:flex-row items-center justify-between mb-8 bg-white rounded-xl p-6 shadow-lg">
-          <div className="md:w-1/2 mb-6 md:mb-0">
-            <h1 className="text-3xl font-bold text-gray-800 mb-4">Find Your Perfect Instructor</h1>
-            <p className="text-gray-600 mb-6">
-              Connect with experienced educators who will guide you through your learning journey.
-              Our instructors are carefully selected to ensure the highest quality of education.
-            </p>
-            <div className="flex flex-wrap gap-4">
-              <div className="flex items-center bg-blue-50 px-4 py-2 rounded-lg">
-                <Award className="w-5 h-5 text-blue-600 mr-2" />
-                <span className="text-blue-600">Certified Teachers</span>
-              </div>
-              <div className="flex items-center bg-green-50 px-4 py-2 rounded-lg">
-                <Clock className="w-5 h-5 text-green-600 mr-2" />
-                <span className="text-green-600">Flexible Schedule</span>
-              </div>
-              <div className="flex items-center bg-purple-50 px-4 py-2 rounded-lg">
-                <Users className="w-5 h-5 text-purple-600 mr-2" />
-                <span className="text-purple-600">1-on-1 Sessions</span>
-              </div>
-            </div>
-          </div>
-          <div className="md:w-1/2 flex justify-center">
-            <img
-              src="/images/instructor-illustration.svg"
-              alt="Instructor Illustration"
-              className="w-full max-w-md h-auto"
-            />
+    <div className="min-h-screen w-full bg-gray-50 flex flex-col">
+      {/* Mobile Header */}
+      {isMobile && (
+        <div className="sticky top-0 z-50 bg-white shadow-sm flex justify-between items-center p-4">
+          {activeView === 'courses' ? (
+            <button 
+              onClick={() => setActiveView('instructors')}
+              className="text-gray-600 hover:text-gray-800"
+            >
+              <ArrowLeft className="w-6 h-6" />
+            </button>
+          ) : (
+            <h1 className="text-xl font-bold text-gray-800">Instructors</h1>
+          )}
+          
+          {activeView === 'instructors' && (
+            <button 
+              onClick={() => {
+                setActiveView('courses');
+                setIsSidebarOpen(true);
+              }}
+              className="text-gray-600 hover:text-gray-800"
+            >
+              <Menu className="w-6 h-6" />
+            </button>
+          )}
+        </div>
+      )}
+
+      {/* Main Content */}
+      <div className={`flex flex-1 ${isMobile ? 'flex-col' : 'flex-row'}`}>
+        {/* Instructors Column */}
+        <div 
+          className={`
+            ${isMobile 
+              ? (activeView === 'instructors' ? 'block' : 'hidden') 
+              : 'block'
+            } 
+            w-full ${!isMobile && selectedInstructor ? 'md:w-2/3' : ''} 
+            p-4 overflow-y-auto
+          `}
+        >
+          {/* Instructors Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {filteredInstructors.map((instructor) => (
+              <motion.div
+                key={instructor._id}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                className={`
+                  bg-white rounded-xl shadow-md overflow-hidden 
+                  hover:shadow-lg transition-all cursor-pointer
+                  ${selectedInstructor?._id === instructor._id ? 'border-2 border-blue-500' : ''}
+                `}
+                onClick={() => handleInstructorSelect(instructor)}
+              >
+                {/* Instructor Card Content */}
+                <div className="p-4">
+                  <div className="flex items-center mb-4">
+                    <img 
+                      src={instructor.profilePicture || DEFAULT_USER_AVATAR} 
+                      alt={`${instructor.firstName} ${instructor.lastName}`}
+                      className="w-12 h-12 md:w-16 md:h-16 rounded-full object-cover mr-4"
+                    />
+                    <div>
+                      <h3 className="text-base md:text-lg font-semibold">
+                        {instructor.firstName} {instructor.lastName}
+                      </h3>
+                      <p className="text-xs md:text-sm text-gray-500">
+                        {instructor.specialization}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </motion.div>
+            ))}
           </div>
         </div>
 
-        {/* Search and Filter Section */}
-        <motion.div variants={itemVariants} className="bg-white rounded-xl shadow-md p-6 mb-8">
-          <div className="grid md:grid-cols-2 gap-4">
-            <div className="relative">
-              <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400" />
-              <input
-                type="text"
-                placeholder="Search by name or subject..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-12 pr-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-400 focus:border-transparent"
-              />
-            </div>
-            <select
-              value={selectedSubject}
-              onChange={(e) => setSelectedSubject(e.target.value)}
-              className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-400 focus:border-transparent"
-            >
-              <option value="">All Subjects</option>
-              <option value="Mathematics">Mathematics</option>
-              <option value="Physics">Physics</option>
-              <option value="English">English</option>
-              <option value="Literature">Literature</option>
-              <option value="History">History</option>
-              <option value="Geography">Geography</option>
-              <option value="Biology">Biology</option>
-              <option value="Chemistry">Chemistry</option>
-              <option value="Computer Science">Computer Science</option>
-            </select>
-          </div>
-        </motion.div>
-
-        {/* Instructors Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredInstructors.map((instructor) => (
+        {/* Courses Sidebar */}
+        <AnimatePresence>
+          {(selectedInstructor || isSidebarOpen) && (
             <motion.div
-              key={instructor.id}
-              variants={itemVariants}
-              className="bg-white rounded-xl shadow-md overflow-hidden hover:shadow-lg transition-shadow"
+              initial={{ 
+                opacity: 0, 
+                x: isMobile ? (activeView === 'courses' ? 0 : '100%') : 50 
+              }}
+              animate={{ 
+                opacity: 1, 
+                x: 0 
+              }}
+              exit={{ 
+                opacity: 0, 
+                x: isMobile ? '100%' : 50 
+              }}
+              className={`
+                ${isMobile 
+                  ? (activeView === 'courses' ? 'block' : 'hidden') 
+                  : 'block'
+                }
+                w-full md:w-1/3 bg-white p-4 
+                ${!isMobile ? 'border-l' : ''}
+                overflow-y-auto
+              `}
             >
-              <div className="relative h-48 bg-gradient-to-r from-blue-500 to-blue-600">
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <img
-                    src={instructor.imageUrl}
-                    alt={instructor.name}
-                    className="w-32 h-32 rounded-full border-4 border-white shadow-lg"
-                  />
-                </div>
-              </div>
-              <div className="p-6">
-                <h3 className="text-xl font-semibold text-gray-800 mb-2">{instructor.name}</h3>
-                <div className="flex items-center mb-4">
-                  <Star className="w-5 h-5 text-yellow-400 fill-current" />
-                  <span className="ml-2 text-gray-600">{instructor.rating}</span>
-                  <span className="mx-2 text-gray-300">•</span>
-                  <Clock className="w-5 h-5 text-gray-400" />
-                  <span className="ml-2 text-gray-600">{instructor.experience}</span>
-                </div>
-                <div className="space-y-3 mb-6">
-                  <div className="flex items-center text-gray-600">
-                    <BookOpen className="w-5 h-5 mr-2 text-blue-500" />
-                    <span>{instructor.subjects.join(' • ')}</span>
+              {selectedInstructor && (
+                <>
+                  <div className="flex justify-between items-center mb-6">
+                    <h2 className="text-xl md:text-2xl font-bold">
+                      {selectedInstructor.firstName}'s Courses
+                    </h2>
+                    {!isMobile && (
+                      <button 
+                        onClick={() => setSelectedInstructor(null)}
+                        className="text-gray-500 hover:text-gray-700"
+                      >
+                        <X className="w-6 h-6" />
+                      </button>
+                    )}
                   </div>
-                  <div className="flex items-center text-gray-600">
-                    <Users className="w-5 h-5 mr-2 text-green-500" />
-                    <span>{instructor.students} students taught</span>
-                  </div>
-                  <div className="flex items-center text-gray-600">
-                    <Clock className="w-5 h-5 mr-2 text-purple-500" />
-                    <span>Available: {instructor.availability}</span>
-                  </div>
-                </div>
-                <motion.button
-                  className="w-full px-6 py-3 bg-gradient-to-r from-blue-500 to-blue-600 text-white font-semibold rounded-xl hover:from-blue-600 hover:to-blue-700 transition-all duration-200"
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                >
-                  Select Instructor
-                </motion.button>
-              </div>
+
+                  {courseLoading ? (
+                    <div className="flex justify-center items-center h-48">
+                      <BookOpen className="w-12 h-12 text-blue-500 animate-pulse" />
+                    </div>
+                  ) : instructorCourses.length === 0 ? (
+                    <div className="text-center text-gray-500 py-8">
+                      No courses available for this instructor.
+                    </div>
+                  ) : (
+                    <div className="space-y-4">
+                      {instructorCourses.map((course) => (
+                        <motion.div
+                          key={course._id}
+                          initial={{ opacity: 0, y: 20 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          className="bg-gray-100 p-4 rounded-lg"
+                        >
+                          <div className="flex justify-between items-center">
+                            <div>
+                              <h3 className="font-semibold text-base md:text-lg">
+                                {course.title}
+                              </h3>
+                              <p className="text-xs md:text-sm text-gray-600">
+                                {course.category} | {course.difficulty} Level
+                              </p>
+                            </div>
+                            <BookmarkPlus className="text-blue-500 w-5 h-5 md:w-6 md:h-6" />
+                          </div>
+                        </motion.div>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Course Pagination */}
+                  {coursePagination.totalPages > 1 && (
+                    <div className="flex justify-center mt-4 space-x-2">
+                      {[...Array(coursePagination.totalPages)].map((_, index) => (
+                        <button
+                          key={index}
+                          onClick={() => {
+                            setCoursePagination(prev => ({ ...prev, page: index + 1 }));
+                            fetchInstructorCourses(selectedInstructor._id);
+                          }}
+                          className={`
+                            w-8 h-8 rounded-full text-xs
+                            ${coursePagination.page === index + 1 
+                              ? 'bg-blue-500 text-white' 
+                              : 'bg-gray-200 text-gray-700'}
+                          `}
+                        >
+                          {index + 1}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </>
+              )}
             </motion.div>
-          ))}
+          )}
+        </AnimatePresence>
+      </div>
+
+      {/* Pagination */}
+      {totalPages > 1 && (
+        <div className="flex justify-center mt-8">
+          <div className="flex space-x-2">
+            {[...Array(totalPages)].map((_, index) => (
+              <button
+                key={index}
+                onClick={() => setPage(index + 1)}
+                className={`w-10 h-10 rounded-full ${
+                  page === index + 1 
+                    ? 'bg-blue-500 text-white' 
+                    : 'bg-gray-200 text-gray-700'
+                }`}
+              >
+                {index + 1}
+              </button>
+            ))}
+          </div>
         </div>
-      </motion.div>
+      )}
     </div>
   );
 }

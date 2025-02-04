@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { getAuthToken } from '../utils/api';
 
 // Define the Instructor interface
 export interface Instructor {
@@ -10,6 +11,8 @@ export interface Instructor {
 
 // Define the FreeCourse interface to match backend
 export interface FreeCourse {
+  tags: never[];
+  duration: string;
   _id?: string;
   title: string;
   description: string;
@@ -36,96 +39,157 @@ export interface FreeCourse {
   };
 }
 
+// Define the FreeCourse interface based on the provided specification
+export interface NewFreeCourse {
+  id: string;
+  title: string;
+  description: string;
+  subject: string;
+  url: string;
+  provider: string;
+  thumbnail?: string;
+  duration?: string;
+  level?: string;
+  tags?: string[];
+}
+
+export interface CourseModule {
+  title: string;
+  description?: string;
+  duration?: string;
+  topics?: string[];
+  content?: string;
+  resources?: string[];
+}
+
+export interface PopularSubject {
+  name: string;
+  courseCount: number;
+}
+
 // Use port 3000 for backend
 const BASE_URL = 'http://localhost:3000/free-courses';
 
-export const FreeCourseService = {
-  // Fetch all free courses
-  async getAllCourses(): Promise<FreeCourse[]> {
+export default {
+  // Search free courses
+  async searchCourses(subject: string): Promise<FreeCourse[]> {
     try {
-      const response = await axios.get(BASE_URL, {
-        timeout: 5000,  // 5 seconds timeout
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json'
-        }
-      });
-      return response.data;
-    } catch (error) {
-      console.error('Error fetching free courses:', error);
-      
-      // More detailed error logging
-      if (axios.isAxiosError(error)) {
-        if (error.response) {
-          // The request was made and the server responded with a status code
-          console.error('Server responded with:', error.response.data);
-          console.error('Status code:', error.response.status);
-        } else if (error.request) {
-          // The request was made but no response was received
-          console.error('No response received:', error.request);
-        } else {
-          // Something happened in setting up the request
-          console.error('Error setting up request:', error.message);
-        }
-      }
+      const token = getAuthToken();
+      const headers = {
+        'Content-Type': 'application/json',
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      };
 
-      // Return an empty array or throw a custom error
+      const response = await axios.get(`${import.meta.env.VITE_BACKEND_URL || 'http://localhost:3000'}/student/free-courses/search`, {
+        params: { subject },
+        headers,
+        withCredentials: true
+      });
+
+      // Ensure we return an array of courses
+      const courses = response.data.courses || response.data;
+      return Array.isArray(courses) ? this.deduplicateCourses(courses) : [];
+    } catch (error) {
+      console.error('Error searching free courses:', error);
       return [];
     }
   },
 
-  // Fetch featured courses
+  // Get popular subjects
+  async getPopularSubjects(): Promise<PopularSubject[]> {
+    try {
+      const token = getAuthToken();
+      const headers = {
+        'Content-Type': 'application/json',
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      };
+
+      const response = await axios.get(`${import.meta.env.VITE_BACKEND_URL || 'http://localhost:3000'}/student/free-courses/popular-subjects`, {
+        headers,
+        withCredentials: true
+      });
+
+      // Ensure we return an array of subjects
+      const subjects = response.data.subjects || response.data;
+      return Array.isArray(subjects) ? subjects : [];
+    } catch (error) {
+      console.error('Error fetching popular subjects:', error);
+      return [];
+    }
+  },
+
+  // Get all available courses
+  async getAllCourses(): Promise<FreeCourse[]> {
+    try {
+      const token = getAuthToken();
+      const headers = {
+        'Content-Type': 'application/json',
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      };
+
+      const response = await axios.get(
+        `${import.meta.env.VITE_BACKEND_URL || 'http://localhost:3000'}/student/courses`, 
+        { 
+          headers, 
+          withCredentials: true 
+        }
+      );
+
+      // Ensure we return an array of courses
+      const courses = response.data.courses || response.data;
+      return Array.isArray(courses) ? this.deduplicateCourses(courses) : [];
+    } catch (error) {
+      console.error('Error fetching all courses:', error);
+      return [];
+    }
+  },
+
+  // Deprecated: Use getAllCourses instead
   async getFeaturedCourses(): Promise<FreeCourse[]> {
-    try {
-      const response = await axios.get(`${BASE_URL}/featured`);
-      return response.data;
-    } catch (error) {
-      console.error('Error fetching featured courses:', error);
-      throw error; // Rethrow to allow component to handle error
-    }
+    return this.getAllCourses();
   },
 
-  // Search courses with optional filters
-  async searchCourses(params: {
-    category?: string;
-    platform?: string;
-    level?: string;
-  }): Promise<FreeCourse[]> {
-    try {
-      const response = await axios.get(`${BASE_URL}/search`, { params });
-      return response.data;
-    } catch (error) {
-      console.error('Error searching courses:', error);
-      throw error; // Rethrow to allow component to handle error
-    }
-  },
-
-  // Get course by ID
+  // Get course by ID with dynamic endpoint selection
   async getCourseById(courseId: string): Promise<FreeCourse> {
     try {
-      const response = await axios.get(`${BASE_URL}/course/${courseId}`);
+      const token = getAuthToken();
+      const headers = {
+        'Content-Type': 'application/json',
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      };
+
+      let response;
+      try {
+        // First, try the student/courses endpoint for all courses
+        response = await axios.get(
+          `${import.meta.env.VITE_BACKEND_URL || 'http://localhost:3000'}/student/courses/${courseId}`, 
+          { 
+            headers, 
+            withCredentials: true 
+          }
+        );
+      } catch (studentCoursesError) {
+        // If that fails, try the free courses endpoint (legacy support)
+        try {
+          response = await axios.get(
+            `${import.meta.env.VITE_BACKEND_URL || 'http://localhost:3000'}/student/free-courses/${courseId}`, 
+            { 
+              headers, 
+              withCredentials: true 
+            }
+          );
+        } catch (freeCourseError) {
+          // If both fail, throw the original error
+          console.error('Error fetching course details:', studentCoursesError);
+          throw studentCoursesError;
+        }
+      }
+
+      // Return the course details
       return response.data;
     } catch (error) {
-      console.error('Error fetching course by ID:', error);
-      
-      // Fallback for development: return a mock course if API call fails
-      return {
-        title: 'Sample Course',
-        description: 'This is a sample course loaded when API fails',
-        courseId: courseId,
-        modules: [],
-        requirements: [],
-        curriculum: [],
-        learningObjectives: ['Learn basic concepts'],
-        instructor: {
-          name: 'Elimu Global Instructor',
-          title: 'Course Facilitator',
-        },
-        rating: 4.5,
-        enrollmentCount: 100,
-        difficulty: 'Beginner',
-        estimatedHours: '10',
-      };
+      console.error('Error fetching course details:', error);
+      throw error;
     }
   },
 
@@ -139,4 +203,85 @@ export const FreeCourseService = {
       return null;
     }
   },
+
+  // Enroll in a course
+  async enrollInCourse(courseId: string): Promise<boolean> {
+    try {
+      const token = getAuthToken();
+      const headers = {
+        'Content-Type': 'application/json',
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      };
+
+      const response = await axios.post(
+        `${import.meta.env.VITE_BACKEND_URL || 'http://localhost:3000'}/student/courses/${courseId}/enroll`, 
+        {}, // Empty body as the courseId is in the URL
+        { 
+          headers, 
+          withCredentials: true 
+        }
+      );
+
+      return response.status === 200 || response.status === 201;
+    } catch (error) {
+      console.error('Error enrolling in course:', error);
+      return false;
+    }
+  },
+
+  // Get enrolled courses
+  async getEnrolledCourses(): Promise<FreeCourse[]> {
+    try {
+      const token = getAuthToken();
+      const headers = {
+        'Content-Type': 'application/json',
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      };
+
+      const response = await axios.get(
+        `${import.meta.env.VITE_BACKEND_URL || 'http://localhost:3000'}/student/courses/enrolled`, 
+        { 
+          headers, 
+          withCredentials: true 
+        }
+      );
+
+      // Transform enrolled courses to extract course details
+      const transformedCourses: FreeCourse[] = response.data.map((enrollment: any) => ({
+        ...enrollment.courseId,
+        enrollmentDetails: {
+          _id: enrollment._id,
+          status: enrollment.status,
+          enrolledAt: enrollment.enrolledAt,
+          certificateIssued: enrollment.certificateIssued,
+          courseCompletionPercentage: enrollment.courseCompletionPercentage
+        }
+      }));
+
+      return Array.isArray(transformedCourses) ? this.deduplicateCourses(transformedCourses) : [];
+    } catch (error) {
+      console.error('Error fetching enrolled courses:', error);
+      return [];
+    }
+  },
+
+  // Deduplicate courses based on unique identifiers
+  deduplicateCourses(courses: FreeCourse[]): FreeCourse[] {
+    const uniqueCourses = new Map<string, FreeCourse>();
+
+    courses.forEach(course => {
+      // Use a combination of _id and title as a unique key
+      const uniqueKey = `${course._id}-${course.title}`;
+      
+      // Keep the first occurrence of a course or prefer courses with more details
+      if (!uniqueCourses.has(uniqueKey) || 
+          (course.sourceContent?.thumbnail && course.description && course.duration)) {
+        uniqueCourses.set(uniqueKey, course);
+      }
+    });
+
+    // Sort courses by platform to provide consistent results
+    return Array.from(uniqueCourses.values())
+      .sort((a, b) => a.sourceContent?.platform.localeCompare(b.sourceContent?.platform));
+  }
 };

@@ -15,25 +15,25 @@ function MoreOptions() {
   const settingsLinks = [
     { 
       name: "Account Settings", 
-      path: "/dashboard/more/account", 
+      path: "/dashboard/account-settings", 
       icon: User,
       description: "Manage your account details and preferences"
     },
     { 
       name: "Notification Preferences", 
-      path: "/dashboard/more/notifications", 
+      path: "/dashboard/notification-preferences", 
       icon: Bell,
       description: "Control your notification settings"
     },
     { 
       name: "Privacy Settings", 
-      path: "/dashboard/more/privacy", 
+      path: "/dashboard/privacy-settings", 
       icon: Lock,
       description: "Manage your privacy and security settings"
     },
     { 
       name: "Language Preferences", 
-      path: "/dashboard/more/language", 
+      path: "/dashboard/language-preferences", 
       icon: Globe,
       description: "Change your language settings"
     },
