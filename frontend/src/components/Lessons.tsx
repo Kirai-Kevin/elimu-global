@@ -353,7 +353,7 @@ function Lessons() {
       const token = getAuthToken();
       
       // Enroll in the course
-      const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/student/courses/enroll`, 
+      const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/student/courses/${courseId}/enroll`, 
         { courseId }, 
         {
           headers: { 

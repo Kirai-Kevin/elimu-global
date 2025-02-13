@@ -104,13 +104,12 @@ const AllCourses: React.FC = () => {
     const fetchCourses = async () => {
       try {
         setLoading(true);
-        setError(null);
         const fetchedCourses = await FreeCourseService.getAllCourses();
-        setCourses(fetchedCourses || []);
-      } catch (error) {
-        console.error('Failed to fetch courses:', error);
-        setError('Unable to load courses. Please check your connection.');
-      } finally {
+        setCourses(fetchedCourses);
+        setLoading(false);
+      } catch (err) {
+        console.error('Error fetching courses:', err);
+        setError('Failed to fetch courses');
         setLoading(false);
       }
     };
@@ -121,9 +120,7 @@ const AllCourses: React.FC = () => {
   const handleEnrollCourse = async (courseId: string) => {
     try {
       // TODO: Replace with actual enrollment API
-      const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL || 'http://localhost:3000'}/student/courses/enroll`, { 
-        courseId 
-      }, {
+      const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL || 'http://localhost:3000'}/student/courses/${courseId}/enroll`, {}, {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('userToken')}`
         }

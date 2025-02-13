@@ -115,28 +115,28 @@ function LoginSignUp() {
       // Log the full response for debugging
       console.log('Full Response:', response);
 
-      // Determine success based on login or registration
-      const isSuccess = isLogin 
-        ? response.data.access_token 
-        : response.data.token;
-
-      if (!isSuccess) {
-        const errorData = response.data;
-        console.error(isLogin ? 'Login failed:' : 'Registration failed:', errorData);
+      // For registration, if we get a 201 status, redirect to login
+      if (!isLogin && response.status === 201) {
+        setIsLogin(true); // Switch to login view
+        setFormData(prev => ({
+          ...prev,
+          name: '' // Clear name field
+        }));
+        // Show success message
         setErrors(prev => ({
           ...prev,
-          general: errorData.message || 'Authentication failed'
+          general: 'Registration successful! Please login with your credentials.'
         }));
         return;
       }
 
-      // Store auth token - handle both login and registration responses
-      const token = isLogin ? response.data.access_token : response.data.token;
+      // Handle login flow
+      const token = response.data.access_token;
       if (!token) {
         console.error('No token received from server');
         setErrors(prev => ({
           ...prev,
-          general: 'Authentication failed - no token received'
+          general: 'Login failed - please try again'
         }));
         return;
       }

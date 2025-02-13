@@ -128,7 +128,7 @@ export default {
       };
 
       const response = await axios.get(
-        `${import.meta.env.VITE_BACKEND_URL || 'http://localhost:3000'}/student/courses`, 
+        `${import.meta.env.VITE_BACKEND_URL || 'http://localhost:3000'}/student/free-courses`, 
         { 
           headers, 
           withCredentials: true 
@@ -139,7 +139,7 @@ export default {
       const courses = response.data.courses || response.data;
       return Array.isArray(courses) ? this.deduplicateCourses(courses) : [];
     } catch (error) {
-      console.error('Error fetching all courses:', error);
+      console.error('Error fetching free courses:', error);
       return [];
     }
   },

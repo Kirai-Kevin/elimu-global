@@ -13,6 +13,8 @@ import {
   Alert,
   Snackbar
 } from '@mui/material';
+import QuizTaking from './QuizTaking';
+import { QuizDetails, QuizAnswer, QuizSubmissionResponse } from '../types/quiz';
 
 const backendUrl = import.meta.env.VITE_BACKEND_URL;
 
@@ -80,6 +82,8 @@ const Quizzes: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [enrollmentError, setEnrollmentError] = useState<string | null>(null);
+  const [activeQuiz, setActiveQuiz] = useState<QuizDetails | null>(null);
+  const [quizSubmissionId, setQuizSubmissionId] = useState<string | null>(null);
 
   useEffect(() => {
     const requestInterceptor = apiClient.interceptors.request.use(
@@ -246,30 +250,19 @@ const Quizzes: React.FC = () => {
 
       console.group('Fetch Quizzes API Debug');
       console.log('Request Details:', {
-        url: `/student/quizzes/${courseId}`,
+        url: `/student/quizzes/course/${courseId}`,
         method: 'GET',
         courseId: courseId,
         token: token ? `${token.substring(0, 10)}...` : 'No Token'
       });
 
-      const response = await apiClient.get(`/student/quizzes/${courseId}`, {
+      const response = await apiClient.get(`/student/quizzes/course/${courseId}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
 
       console.log('Full API Response:', response);
       console.log('Quizzes Response Data:', response.data);
       console.groupEnd();
-
-      // Log quiz details for debugging
-      if (Array.isArray(response.data)) {
-        response.data.forEach((quiz, index) => {
-          console.log(`Quiz ${index + 1}:`, {
-            id: quiz.id,
-            title: quiz.title,
-            description: quiz.description
-          });
-        });
-      }
 
       setQuizzes(response.data);
     } catch (err) {
@@ -282,7 +275,6 @@ const Quizzes: React.FC = () => {
       }
       
       console.groupEnd();
-
       setQuizzes([]);
     }
   };
@@ -434,7 +426,7 @@ const Quizzes: React.FC = () => {
         
         console.log('Full Request Configuration:', requestConfig);
 
-        const enrollResponse = await apiClient.post(
+        await apiClient.post(
           `/student/courses/${courseId}/enroll`, 
           // Include courseId in the payload
           { courseId }, 
@@ -445,7 +437,7 @@ const Quizzes: React.FC = () => {
             }
           }
         );
-        
+
         // Refresh enrolled courses after successful enrollment
         const enrolledResponse = await apiClient.get('/student/courses/enrolled', {
           headers: { 
@@ -500,6 +492,63 @@ const Quizzes: React.FC = () => {
     setEnrollmentError(null);
   };
 
+  const handleStartQuiz = async (quizId: string) => {
+    try {
+      const userString = localStorage.getItem('user');
+      if (!userString) throw new Error('No user data found');
+      
+      const { token } = JSON.parse(userString);
+      
+      // Start the quiz and get submission ID
+      const startResponse = await apiClient.post(`/student/quizzes/${quizId}/start`, null, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      
+      setQuizSubmissionId(startResponse.data.submissionId);
+      
+      // Get quiz details
+      const quizDetailsResponse = await apiClient.get(`/student/quizzes/${quizId}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      
+      setActiveQuiz(quizDetailsResponse.data);
+    } catch (error) {
+      console.error('Error starting quiz:', error);
+      setError('Failed to start quiz. Please try again.');
+    }
+  };
+
+  const handleQuizSubmit = async (answers: QuizAnswer[]): Promise<QuizSubmissionResponse> => {
+    if (!activeQuiz?._id || !quizSubmissionId) {
+      throw new Error('Missing quiz or submission information');
+    }
+  
+    const userString = localStorage.getItem('user');
+    if (!userString) {
+      throw new Error('No user data found');
+    }
+  
+    const { token } = JSON.parse(userString);
+    
+    try {
+      const response = await apiClient.post(
+        `/student/quizzes/${activeQuiz._id}/submissions/${quizSubmissionId}/submit`,
+        { answers },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      
+      return response.data;
+    } catch (error) {
+      console.error('Error submitting quiz:', error);
+      throw new Error('Failed to submit quiz');
+    }
+  };
+
+  const handleCloseQuiz = () => {
+    setActiveQuiz(null);
+    setQuizSubmissionId(null);
+  };
+
   if (loading) {
     return (
       <Container>
@@ -538,90 +587,39 @@ const Quizzes: React.FC = () => {
         </Alert>
       </Snackbar>
 
-      {enrolledCourses.length === 0 ? (
-        <Box>
-          <Typography variant="h5" gutterBottom>
-            Available Courses
-          </Typography>
-          {availableCourses.length === 0 ? (
-            <Alert severity="info">No courses available to enroll.</Alert>
-          ) : (
-            <Grid container spacing={2}>
-              {availableCourses.map(course => (
-                <Grid item xs={12} sm={6} md={4} key={course._id}>
-                  <Card>
-                    <CardContent>
-                      <Typography variant="h6">{course.title}</Typography>
-                      <Typography variant="body2">{course.description}</Typography>
-                      <Button 
-                        variant="contained" 
-                        color="primary" 
-                        onClick={() => handleEnrollCourse(course._id)}
-                        fullWidth
-                        sx={{ mt: 2 }}
-                      >
-                        Enroll
-                      </Button>
-                    </CardContent>
-                  </Card>
-                </Grid>
-              ))}
-            </Grid>
-          )}
-        </Box>
+      {activeQuiz && quizSubmissionId ? (
+        <QuizTaking
+          quiz={activeQuiz}
+          submissionId={quizSubmissionId}
+          onSubmit={handleQuizSubmit}
+          onClose={handleCloseQuiz}
+        />
       ) : (
-        <Box>
-          <Typography variant="h5" gutterBottom>
-            Your Enrolled Courses
-          </Typography>
-          <Grid container spacing={2}>
-            {enrolledCourses.map(course => (
-              <Grid item xs={12} sm={6} md={4} key={course._id}>
-                <Card>
-                  <CardActionArea 
-                    onClick={() => handleCourseSelect(course)}
-                    sx={{
-                      '&:hover': {
-                        backgroundColor: 'rgba(0, 0, 0, 0.08)'
-                      }
-                    }}
-                  >
-                    <CardContent>
-                      <Typography variant="h6">{course.title}</Typography>
-                      <Typography variant="body2">{course.description}</Typography>
-                      <Typography 
-                        variant="body2" 
-                        color="primary" 
-                        sx={{ 
-                          mt: 2, 
-                          fontWeight: 'bold',
-                          textAlign: 'center'
-                        }}
-                      >
-                        Check Available Quizzes
-                      </Typography>
-                    </CardContent>
-                  </CardActionArea>
-                </Card>
-              </Grid>
-            ))}
-          </Grid>
-
-          {selectedCourse && (
-            <Box mt={4}>
-              <Typography variant="h6" gutterBottom>
-                Quizzes for {selectedCourse.title}
+        <>
+          {enrolledCourses.length === 0 ? (
+            <Box>
+              <Typography variant="h5" gutterBottom>
+                Available Courses
               </Typography>
-              {quizzes.length === 0 ? (
-                <Typography>No quizzes available for this course.</Typography>
+              {availableCourses.length === 0 ? (
+                <Alert severity="info">No courses available to enroll.</Alert>
               ) : (
                 <Grid container spacing={2}>
-                  {quizzes.map(quiz => (
-                    <Grid item xs={12} sm={6} md={4} key={quiz.id}>
+                  {availableCourses.map(course => (
+                    <Grid item xs={12} sm={6} md={4} key={course._id}>
                       <Card>
                         <CardContent>
-                          <Typography variant="h6">{quiz.title}</Typography>
-                          <Typography variant="body2">{quiz.description}</Typography>
+                          <Typography variant="h6">{course.title}</Typography>
+                          <Typography variant="body2">{course.description}</Typography>
+                          <Button 
+                            variant="contained" 
+                            color="primary" 
+                            onClick={() => handleEnrollCourse(course._id)}
+                            fullWidth
+                            sx={{ mt: 2 }}
+                          >
+                            Enroll
+                          </Button>
                         </CardContent>
                       </Card>
                     </Grid>
@@ -629,8 +627,78 @@ const Quizzes: React.FC = () => {
                 </Grid>
               )}
             </Box>
+          ) : (
+            <Box>
+              <Typography variant="h5" gutterBottom>
+                Your Enrolled Courses
+              </Typography>
+              <Grid container spacing={2}>
+                {enrolledCourses.map(course => (
+                  <Grid item xs={12} sm={6} md={4} key={course._id}>
+                    <Card>
+                      <CardActionArea 
+                        onClick={() => handleCourseSelect(course)}
+                        sx={{
+                          '&:hover': {
+                            backgroundColor: 'rgba(0, 0, 0, 0.08)'
+                          }
+                        }}
+                      >
+                        <CardContent>
+                          <Typography variant="h6">{course.title}</Typography>
+                          <Typography variant="body2">{course.description}</Typography>
+                          <Typography 
+                            variant="body2" 
+                            color="primary" 
+                            sx={{ 
+                              mt: 2, 
+                              fontWeight: 'bold',
+                              textAlign: 'center'
+                            }}
+                          >
+                            Check Available Quizzes
+                          </Typography>
+                        </CardContent>
+                      </CardActionArea>
+                    </Card>
+                  </Grid>
+                ))}
+              </Grid>
+
+              {selectedCourse && (
+                <Box mt={4}>
+                  <Typography variant="h6" gutterBottom>
+                    Quizzes for {selectedCourse.title}
+                  </Typography>
+                  {quizzes.length === 0 ? (
+                    <Typography>No quizzes available for this course.</Typography>
+                  ) : (
+                    <Grid container spacing={2}>
+                      {quizzes.map(quiz => (
+                        <Grid item xs={12} sm={6} md={4} key={quiz.id}>
+                          <Card>
+                            <CardContent>
+                              <Typography variant="h6">{quiz.title}</Typography>
+                              <Typography variant="body2">{quiz.description}</Typography>
+                              <Button
+                                variant="contained"
+                                color="primary"
+                                onClick={() => handleStartQuiz(quiz.id)}
+                                sx={{ mt: 2 }}
+                              >
+                                Start Quiz
+                              </Button>
+                            </CardContent>
+                          </Card>
+                        </Grid>
+                      ))}
+                    </Grid>
+                  )}
+                </Box>
+              )}
+            </Box>
           )}
-        </Box>
+        </>
       )}
     </Container>
   );
