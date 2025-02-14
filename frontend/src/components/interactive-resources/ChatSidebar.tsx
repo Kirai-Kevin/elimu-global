@@ -1,15 +1,6 @@
 import React, { useState } from 'react';
 import { Search, BookOpen, UserCircle2, Filter, ChevronRight } from 'lucide-react';
-
-interface Course {
-  _id: string;
-  title: string;
-  instructor?: {
-    name?: string;
-  } | null;
-  enrolled: boolean;
-  category?: string;
-}
+import { Course } from '../../types/interactive';
 
 interface ChatSidebarProps {
   courses: Course[];  // Ensure this is always an array
@@ -29,18 +20,20 @@ const ChatSidebar: React.FC<ChatSidebarProps> = ({
   const [filterCategory, setFilterCategory] = useState<string | null>(null);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
-  // Safely get unique categories
+  // Safely get unique categories with proper type handling
   const categories = [...new Set(
     (courses || [])
       .map(course => course.category)
-      .filter(Boolean)
+      .filter((category): category is string => 
+        category !== undefined && category !== null
+      )
   )];
 
   // Safely filter courses
   const filteredCourses = (courses || []).filter(course => 
     (course.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
      course.instructor?.name?.toLowerCase().includes(searchQuery.toLowerCase())) &&
-    (filterCategory ? course.category === filterCategory : true)
+    (!filterCategory || (course.category && course.category === filterCategory))
   );
 
   return (
