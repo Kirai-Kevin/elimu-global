@@ -1,13 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { 
-  UnifiedAssessmentService, 
-  CourseService, 
   Assignment, 
   Assessment, 
   AssignmentSubmission, 
-  AssessmentSubmission 
+  AssessmentSubmission,
+  UnifiedAssessmentService 
 } from '../types/assessment';
+import courseService from '../services/courseService';
 import LearningMode from './LearningMode';
 
 const AssessmentPage: React.FC = () => {
@@ -18,17 +18,27 @@ const AssessmentPage: React.FC = () => {
   }>();
   const navigate = useNavigate();
   const unifiedService = new UnifiedAssessmentService();
-  const courseService = new CourseService();
 
   const [item, setItem] = useState<Assignment | Assessment | null>(null);
   const [course, setCourse] = useState<{ title: string } | null>(null);
-  const [submissionData, setSubmissionData] = useState<AssignmentSubmission | AssessmentSubmission>({
-    courseId: courseId || '',
-    itemId: itemId || '',
-    submissionUrl: '',
-    submissionText: '',
-    attachments: []
-  });
+  const [isEnrolled, setIsEnrolled] = useState(false);
+  const [submissionData, setSubmissionData] = useState<AssignmentSubmission | AssessmentSubmission>(
+    type === 'assignments' 
+      ? {
+          courseId: courseId || '',
+          assignmentId: itemId || '',
+          itemId: itemId || '', // Supporting both old and new implementations
+          submissionUrl: '',
+          submissionText: '',
+          attachments: []
+        }
+      : {
+          courseId: courseId || '',
+          assessmentId: itemId || '',
+          studentId: '', // This will be set by the backend
+          questions: []
+        }
+  );
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [submissionStatus, setSubmissionStatus] = useState<'NOT_STARTED' | 'SUBMITTING' | 'SUBMITTED'>('NOT_STARTED');
@@ -42,38 +52,72 @@ const AssessmentPage: React.FC = () => {
     setIsLearningModeOpen(false);
   };
 
-  useEffect(() => {
-    const fetchItemDetails = async () => {
-      if (!courseId || !itemId) {
-        setError('Missing course or item ID');
+  const handleEnroll = async () => {
+    if (!courseId) return;
+    
+    try {
+      await courseService.enrollInCourse(courseId);
+      setIsEnrolled(true);
+      fetchItemDetails();
+    } catch (error) {
+      console.error('Failed to enroll in course:', error);
+      setError('Failed to enroll in course. Please try again.');
+    }
+  };
+
+  const fetchItemDetails = async () => {
+    if (!courseId || !itemId) {
+      setError('Missing course or item ID');
+      setLoading(false);
+      return;
+    }
+
+    try {
+      // Fetch course details
+      const fetchedCourse = await courseService.getCourseById(courseId);
+      setCourse(fetchedCourse);
+
+      // Fetch item details
+      const fetchedItem = await unifiedService.getItem(courseId, itemId, type);
+      
+      if (!fetchedItem) {
+        setError(`${type.charAt(0).toUpperCase() + type.slice(1)} not found`);
         setLoading(false);
         return;
       }
 
+      setItem(fetchedItem);
+    } catch (error) {
+      console.error(`Failed to fetch ${type} details:`, error);
+      setError(`Failed to load ${type} details`);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    const initializeData = async () => {
+      if (!courseId) return;
+      
       try {
-        // Fetch course details
-        const fetchedCourse = await courseService.getCourseById(courseId);
-        setCourse(fetchedCourse);
-
-        // Fetch item details
-        const fetchedItem = await unifiedService.getItem(courseId, itemId, type);
+        // First check enrollment status
+        const enrolled = await courseService.checkEnrollmentStatus(courseId);
+        setIsEnrolled(enrolled);
         
-        if (!fetchedItem) {
-          setError(`${type.charAt(0).toUpperCase() + type.slice(1)} not found`);
+        if (enrolled) {
+          // If already enrolled, fetch item details
+          await fetchItemDetails();
+        } else {
           setLoading(false);
-          return;
         }
-
-        setItem(fetchedItem);
       } catch (error) {
-        console.error(`Failed to fetch ${type} details:`, error);
-        setError(`Failed to load ${type} details`);
-      } finally {
+        console.error('Error initializing data:', error);
+        setError('Failed to initialize data');
         setLoading(false);
       }
     };
 
-    fetchItemDetails();
+    initializeData();
   }, [courseId, itemId, type]);
 
   const handleSubmit = async () => {
@@ -89,10 +133,7 @@ const AssessmentPage: React.FC = () => {
         type
       );
 
-      // Handle successful submission
       setSubmissionStatus('SUBMITTED');
-      
-      // Optional: show success message or redirect
       setTimeout(() => {
         navigate(`/dashboard/${type}`);
       }, 2000);
@@ -114,12 +155,16 @@ const AssessmentPage: React.FC = () => {
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (files) {
-      // Convert files to URLs or handle file upload logic
       const fileUrls = Array.from(files).map(file => URL.createObjectURL(file));
-      setSubmissionData(prev => ({
-        ...prev,
-        attachments: fileUrls
-      }));
+      setSubmissionData(prev => {
+        if ('attachments' in prev) {
+          return {
+            ...prev,
+            attachments: fileUrls
+          };
+        }
+        return prev;
+      });
     }
   };
 
@@ -135,6 +180,23 @@ const AssessmentPage: React.FC = () => {
     return (
       <div className="w-full h-screen bg-gradient-to-br from-blue-50 to-white flex items-center justify-center">
         <div className="text-red-600">{error}</div>
+      </div>
+    );
+  }
+
+  if (!isEnrolled) {
+    return (
+      <div className="w-full h-screen bg-gradient-to-br from-blue-50 to-white flex items-center justify-center">
+        <div className="text-center">
+          <h2 className="text-2xl font-bold text-gray-800 mb-4">Course Enrollment Required</h2>
+          <p className="text-gray-600 mb-6">You need to enroll in this course to access its assessments.</p>
+          <button 
+            onClick={handleEnroll}
+            className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+          >
+            Enroll Now
+          </button>
+        </div>
       </div>
     );
   }
@@ -182,58 +244,60 @@ const AssessmentPage: React.FC = () => {
           )}
         </div>
 
-        <div className="space-y-4">
-          <div>
-            <label htmlFor="submissionUrl" className="block text-sm font-medium text-gray-700">
-              Submission URL (Optional)
-            </label>
-            <input
-              type="url"
-              id="submissionUrl"
-              name="submissionUrl"
-              value={(submissionData as AssignmentSubmission).submissionUrl || ''}
-              onChange={handleInputChange}
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200"
-              placeholder="Enter submission URL (e.g., Google Docs, GitHub link)"
-            />
-          </div>
+        {type === 'assignments' && (
+          <div className="space-y-4">
+            <div>
+              <label htmlFor="submissionUrl" className="block text-sm font-medium text-gray-700">
+                Submission URL (Optional)
+              </label>
+              <input
+                type="url"
+                id="submissionUrl"
+                name="submissionUrl"
+                value={(submissionData as AssignmentSubmission).submissionUrl || ''}
+                onChange={handleInputChange}
+                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200"
+                placeholder="Enter submission URL (e.g., Google Docs, GitHub link)"
+              />
+            </div>
 
-          <div>
-            <label htmlFor="submissionText" className="block text-sm font-medium text-gray-700">
-              Submission Text (Optional)
-            </label>
-            <textarea
-              id="submissionText"
-              name="submissionText"
-              value={(submissionData as AssignmentSubmission).submissionText || ''}
-              onChange={handleInputChange}
-              rows={4}
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200"
-              placeholder="Provide additional details or explanation"
-            />
-          </div>
+            <div>
+              <label htmlFor="submissionText" className="block text-sm font-medium text-gray-700">
+                Submission Text (Optional)
+              </label>
+              <textarea
+                id="submissionText"
+                name="submissionText"
+                value={(submissionData as AssignmentSubmission).submissionText || ''}
+                onChange={handleInputChange}
+                rows={4}
+                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200"
+                placeholder="Provide additional details or explanation"
+              />
+            </div>
 
-          <div>
-            <label htmlFor="attachments" className="block text-sm font-medium text-gray-700">
-              Attachments (Optional)
-            </label>
-            <input
-              type="file"
-              id="attachments"
-              name="attachments"
-              multiple
-              onChange={handleFileUpload}
-              className="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:rounded-full file:border-0 file:bg-blue-50 file:px-4 file:py-2 file:text-sm file:font-semibold hover:file:bg-blue-100"
-            />
-            {submissionData.attachments && submissionData.attachments.length > 0 && (
-              <div className="mt-2">
-                <p className="text-sm text-gray-500">
-                  {submissionData.attachments.length} file(s) selected
-                </p>
-              </div>
-            )}
+            <div>
+              <label htmlFor="attachments" className="block text-sm font-medium text-gray-700">
+                Attachments (Optional)
+              </label>
+              <input
+                type="file"
+                id="attachments"
+                name="attachments"
+                multiple
+                onChange={handleFileUpload}
+                className="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:rounded-full file:border-0 file:bg-blue-50 file:px-4 file:py-2 file:text-sm file:font-semibold hover:file:bg-blue-100"
+              />
+              {'attachments' in submissionData && submissionData.attachments && submissionData.attachments.length > 0 && (
+                <div className="mt-2">
+                  <p className="text-sm text-gray-500">
+                    {submissionData.attachments.length} file(s) selected
+                  </p>
+                </div>
+              )}
+            </div>
           </div>
-        </div>
+        )}
 
         <div className="mt-6 flex justify-end">
           <button

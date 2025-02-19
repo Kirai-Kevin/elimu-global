@@ -19,6 +19,16 @@ export interface EnrolledCourse {
   progress: number;
 }
 
+export interface Course {
+  _id: string;
+  title: string;
+  description: string;
+  category?: string;
+  difficulty?: string;
+  coverImage?: string;
+  instructorName?: string;
+}
+
 const courseService = {
   enrollInCourse: async (courseId: string) => {
     try {
@@ -85,6 +95,73 @@ const courseService = {
     } catch (error) {
       console.error('Error checking enrollment status:', error);
       return false;
+    }
+  },
+
+  getCourseById: async (courseId: string) => {
+    try {
+      const userString = localStorage.getItem('user');
+      if (!userString) throw new Error('No authentication found');
+      
+      const { token } = JSON.parse(userString);
+      
+      const response = await api.get<Course>(
+        `/student/courses/${courseId}`,
+        { headers: { Authorization: `Bearer ${token}` }}
+      );
+      
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching course details:', error);
+      if (axios.isAxiosError(error)) {
+        throw new Error(
+          error.response?.data?.message || 
+          'Failed to fetch course details'
+        );
+      }
+      throw error;
+    }
+  },
+
+  getCurrentCourse: async () => {
+    try {
+      const userString = localStorage.getItem('user');
+      if (!userString) throw new Error('No authentication found');
+      
+      const { token } = JSON.parse(userString);
+      
+      // First try to get enrolled courses
+      const enrolledCourses = await courseService.getEnrolledCourses();
+      
+      if (enrolledCourses.length > 0) {
+        // Return the first enrolled course as the current course
+        return {
+          _id: enrolledCourses[0].courseId._id,
+          title: enrolledCourses[0].courseId.title,
+          description: enrolledCourses[0].courseId.description
+        };
+      }
+
+      // If no enrolled courses, try to get available courses
+      const response = await api.get<{ courses: Course[] }>(
+        '/student/courses',
+        { headers: { Authorization: `Bearer ${token}` }}
+      );
+      
+      if (response.data.courses && response.data.courses.length > 0) {
+        return response.data.courses[0];
+      }
+
+      return null;
+    } catch (error) {
+      console.error('Error fetching current course:', error);
+      if (axios.isAxiosError(error)) {
+        throw new Error(
+          error.response?.data?.message || 
+          'Failed to fetch current course'
+        );
+      }
+      throw error;
     }
   }
 };

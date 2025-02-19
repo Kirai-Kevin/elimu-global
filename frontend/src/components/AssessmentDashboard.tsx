@@ -2,11 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
   UnifiedAssessmentService, 
-  CourseService, 
   Assignment, 
-  Assessment, 
-  Course 
+  Assessment
 } from '../types/assessment';
+import courseService, { Course } from '../services/courseService';
 import LearningMode from './LearningMode'; 
 
 const AssessmentDashboard: React.FC = () => {
@@ -18,7 +17,6 @@ const AssessmentDashboard: React.FC = () => {
   const [isLearningModalOpen, setIsLearningModalOpen] = useState(false);
   const navigate = useNavigate();
   const unifiedService = new UnifiedAssessmentService();
-  const courseService = new CourseService();
 
   useEffect(() => {
     const fetchItemsAndCourse = async () => {

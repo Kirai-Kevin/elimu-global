@@ -110,9 +110,9 @@ function Layout() {
           <div className="flex-1" />
           {sidebarItems.find((item) => item.name === 'More') && (
             <Link
-              to={sidebarItems.find((item) => item.name === 'More').path}
+              to={sidebarItems.find((item) => item.name === 'More')?.path || '/dashboard'}
               className={`flex items-center w-full px-4 py-3 text-sm rounded-xl transition-all duration-200 ${
-                location.pathname === sidebarItems.find((item) => item.name === 'More').path
+                location.pathname === sidebarItems.find((item) => item.name === 'More')?.path
                   ? 'bg-white/20 text-white font-semibold'
                   : 'text-blue-100 hover:bg-white/10'
               }`}
