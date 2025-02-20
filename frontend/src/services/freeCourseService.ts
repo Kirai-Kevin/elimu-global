@@ -36,6 +36,14 @@ export interface FreeCourse {
   sourceContent?: {
     platform?: string;
     originalUrl?: string;
+    thumbnail?: string;
+  };
+  enrollmentDetails?: {
+    _id: string;
+    status: string;
+    enrolledAt: string;
+    certificateIssued: boolean;
+    courseCompletionPercentage: number;
   };
 }
 
@@ -282,6 +290,10 @@ export default {
 
     // Sort courses by platform to provide consistent results
     return Array.from(uniqueCourses.values())
-      .sort((a, b) => a.sourceContent?.platform.localeCompare(b.sourceContent?.platform));
+      .sort((a, b) => {
+        const platformA = a.sourceContent?.platform || '';
+        const platformB = b.sourceContent?.platform || '';
+        return platformA.localeCompare(platformB);
+      });
   }
 };

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import axios from 'axios';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Rocket, 
@@ -21,105 +22,6 @@ import 'react-toastify/dist/ReactToastify.css';
 import FreeCourseService from '../../services/freeCourseService';
 import { FreeCourse } from '../../services/freeCourseService';
 
-const CourseCard: React.FC<{ course: FreeCourse }> = ({ course }) => {
-  const navigate = useNavigate();
-
-  const cardVariants = {
-    hidden: { opacity: 0, scale: 0.9 },
-    visible: { 
-      opacity: 1, 
-      scale: 1,
-      transition: { 
-        type: "spring", 
-        stiffness: 300, 
-        damping: 20 
-      }
-    },
-    hover: { 
-      scale: 1.05,
-      boxShadow: "0px 10px 20px rgba(0, 0, 0, 0.1)",
-      transition: { 
-        type: "spring", 
-        stiffness: 300 
-      }
-    }
-  };
-
-  return (
-    <motion.div 
-      variants={cardVariants}
-      initial="hidden"
-      animate="visible"
-      whileHover="hover"
-      className="bg-white rounded-2xl shadow-lg overflow-hidden 
-        transform transition-all duration-300 
-        border border-blue-50 hover:border-blue-100
-        flex flex-col"
-    >
-      <div className="relative">
-        {/* Playful course badge */}
-        <div className="absolute top-2 right-2 z-10">
-          <motion.span 
-            initial={{ rotate: 0 }}
-            animate={{ rotate: [0, 10, -10, 0] }}
-            transition={{ 
-              repeat: Infinity, 
-              duration: 1.5,
-              ease: "easeInOut"
-            }}
-            className="bg-yellow-400 text-white px-2 py-1 rounded-full 
-              text-xs flex items-center gap-1"
-          >
-            <Sparkles size={14} /> Featured
-          </motion.span>
-        </div>
-
-        {/* Course Image Placeholder with Gradient */}
-        <div className="h-48 w-full bg-gradient-to-br 
-          from-blue-400 to-purple-600 
-          flex items-center justify-center">
-          <BookOpen className="text-white" size={64} />
-        </div>
-      </div>
-
-      <div className="p-4 flex-grow flex flex-col">
-        <h2 className="text-xl font-bold mb-2 text-gray-800 line-clamp-2">
-          {course.title}
-        </h2>
-        
-        <p className="text-sm text-gray-600 mb-4 flex-grow line-clamp-3">
-          {course.description}
-        </p>
-
-        <div className="flex flex-col gap-2">
-          <div className="flex items-center justify-between text-sm text-gray-500">
-            <div className="flex items-center gap-2">
-              <TrendingUp size={16} />
-              <span>{course.difficulty || 'Beginner'}</span>
-            </div>
-            {course.duration && (
-              <div className="flex items-center gap-2">
-                <Clock size={16} />
-                <span>{course.duration}</span>
-              </div>
-            )}
-          </div>
-
-          <motion.button
-            whileTap={{ scale: 0.95 }}
-            onClick={() => navigate(`/courses/${course._id}`)}
-            className="w-full bg-blue-500 text-white px-4 py-2 rounded-full 
-              flex items-center justify-center gap-2 hover:bg-blue-600 
-              transition-colors duration-300"
-          >
-            <Play size={16} /> Start Course
-          </motion.button>
-        </div>
-      </div>
-    </motion.div>
-  );
-};
-
 const FeaturedCourses: React.FC = () => {
   const navigate = useNavigate();
   const [allCourses, setAllCourses] = useState<FreeCourse[]>([]);
@@ -127,6 +29,7 @@ const FeaturedCourses: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<'all' | 'enrolled'>('all');
+  const [enrollingCourseId, setEnrollingCourseId] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchCourses = async () => {
@@ -177,51 +80,48 @@ const FeaturedCourses: React.FC = () => {
   }, []);
 
   const handleEnroll = async (course: FreeCourse) => {
+    if (!course._id) return;
+    
     try {
-      // Enroll in the course
-      const enrolled = await FreeCourseService.enrollInCourse(course._id || '');
+      setEnrollingCourseId(course._id);
       
-      if (enrolled) {
+      // Call the enrollment endpoint
+      const response = await axios.post(
+        `${import.meta.env.VITE_BACKEND_URL}/student/courses/${course._id}/enroll`,
+        {},
+        {
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('userToken')}`,
+            'Content-Type': 'application/json'
+          }
+        }
+      );
+
+      if (response.status === 200 || response.status === 201) {
         // Refresh enrolled courses
         const updatedEnrolled = await FreeCourseService.getEnrolledCourses();
         setEnrolledCourses(updatedEnrolled);
 
-        // Show success toast
         toast.success(`Successfully enrolled in ${course.title}!`, {
           position: "top-right",
           autoClose: 3000,
           icon: <CheckCircle className="text-green-500" />,
-          hideProgressBar: false,
-          closeOnClick: true,
-          pauseOnHover: true,
-          draggable: true,
         });
 
-        // Switch to enrolled tab
         setActiveTab('enrolled');
-      } else {
-        // Show error toast if enrollment fails
-        toast.error(`Failed to enroll in ${course.title}. Please try again.`, {
-          position: "top-right",
-          autoClose: 3000,
-          icon: <AlertTriangle className="text-red-500" />,
-          hideProgressBar: false,
-          closeOnClick: true,
-          pauseOnHover: true,
-          draggable: true,
-        });
       }
-    } catch (err) {
-      console.error('Enrollment failed:', err);
-      toast.error(`An error occurred while enrolling in ${course.title}.`, {
-        position: "top-right",
-        autoClose: 3000,
-        icon: <AlertTriangle className="text-red-500" />,
-        hideProgressBar: false,
-        closeOnClick: true,
-        pauseOnHover: true,
-        draggable: true,
-      });
+    } catch (error: any) {
+      console.error('Enrollment failed:', error);
+      toast.error(
+        (error.response?.data?.message as string) || `Failed to enroll in ${course.title}`,
+        {
+          position: "top-right",
+          autoClose: 5000,
+          icon: <AlertTriangle className="text-red-500" />,
+        }
+      );
+    } finally {
+      setEnrollingCourseId(null);
     }
   };
 
@@ -348,17 +248,59 @@ const FeaturedCourses: React.FC = () => {
               >
                 <Play size={16} /> Continue Learning
               </motion.button>
-            ) : hasExternalLink ? (
-              <motion.button
-                whileTap={{ scale: 0.95 }}
-                onClick={() => handleCourseNavigation(course)}
-                className="w-full bg-purple-500 text-white px-4 py-2 rounded-full 
-                  flex items-center justify-center gap-2 hover:opacity-90 
-                  transition-colors duration-300"
-              >
-                <ExternalLink size={16} /> Open Course
-              </motion.button>
-            ) : null}
+            ) : (
+              <>
+                {hasExternalLink ? (
+                  <motion.button
+                    whileTap={{ scale: 0.95 }}
+                    onClick={() => handleCourseNavigation(course)}
+                    className="w-full bg-purple-500 text-white px-4 py-2 rounded-full 
+                      flex items-center justify-center gap-2 hover:opacity-90 
+                      transition-colors duration-300 mb-2"
+                  >
+                    <ExternalLink size={16} /> Open Course
+                  </motion.button>
+                ) : (
+                  <motion.button
+                    whileTap={{ scale: 0.95 }}
+                    onClick={() => handleCourseNavigation(course)}
+                    className="w-full bg-blue-500 text-white px-4 py-2 rounded-full 
+                      flex items-center justify-center gap-2 hover:bg-blue-600 
+                      transition-colors duration-300 mb-2"
+                  >
+                    <Play size={16} /> Start Course
+                  </motion.button>
+                )}
+                <motion.button
+                  whileTap={{ scale: 0.95 }}
+                  onClick={() => handleEnroll(course)}
+                  disabled={enrollingCourseId === course._id}
+                  className={`w-full px-4 py-2 rounded-full 
+                    flex items-center justify-center gap-2
+                    transition-colors duration-300
+                    ${enrollingCourseId === course._id
+                      ? 'bg-gray-300 text-gray-600 cursor-not-allowed'
+                      : 'bg-green-500 text-white hover:bg-green-600'
+                    }`}
+                >
+                  {enrollingCourseId === course._id ? (
+                    <motion.div
+                      animate={{ rotate: 360 }}
+                      transition={{ 
+                        repeat: Infinity, 
+                        duration: 1, 
+                        ease: "linear" 
+                      }}
+                    >
+                      <Rocket size={16} />
+                    </motion.div>
+                  ) : (
+                    <Star size={16} />
+                  )}
+                  {enrollingCourseId === course._id ? 'Enrolling...' : 'Enroll Now'}
+                </motion.button>
+              </>
+            )}
           </div>
         </div>
       </motion.div>
