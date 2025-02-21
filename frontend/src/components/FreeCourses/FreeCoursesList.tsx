@@ -3,86 +3,71 @@ import { motion } from 'framer-motion';
 import { 
   Search, 
   Book, 
-  BookOpen, 
   GraduationCap, 
   ChevronRight,
-  AlertCircle,
-  ExternalLink,
-  Video,
   Clock,
   Users,
-  Star,
-  ArrowLeft,
-  PlusCircle
+  Star
 } from 'lucide-react';
 import FreeCourseService from '../../services/freeCourseService';
 import { FreeCourse } from '../../services/freeCourseService';
 import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
 
 interface CourseCardProps {
   course: FreeCourse;
-  onEnroll: (courseId: string) => void;
 }
 
-const CourseCard: React.FC<CourseCardProps> = ({ course, onEnroll }) => {
+const CourseCard: React.FC<CourseCardProps> = ({ course }) => {
   const navigate = useNavigate();
 
   return (
     <motion.div 
       whileHover={{ scale: 1.02 }}
-      className="course-card"
+      className="relative backdrop-blur-md bg-white/30 rounded-xl shadow-lg border border-white/20 overflow-hidden hover:shadow-xl transition-all duration-300"
     >
-      <div className="course-card-header">
-        <h2>{course.title}</h2>
+      <div className="bg-blue-500/80 backdrop-blur-sm p-4">
+        <h2 className="text-white font-semibold text-lg truncate">{course.title}</h2>
         {course.sourceContent?.platform === 'Featured' && (
           <motion.span 
             initial={{ opacity: 0, scale: 0.5 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.3 }}
-            className="course-badge"
+            className="absolute top-4 right-4 bg-yellow-400 text-xs font-bold px-2 py-1 rounded-full"
           >
             Featured
           </motion.span>
         )}
       </div>
-      <div className="course-card-body">
-        <div className="course-details">
-          <div className="course-details-item">
-            <Book size={16} />
-            <span>{course.category}</span>
+      <div className="p-4 space-y-4">
+        <div className="space-y-2">
+          <div className="flex items-center text-gray-600 space-x-2">
+            <Book size={16} className="text-blue-500" />
+            <span className="text-sm">{course.category}</span>
           </div>
-          <div className="course-details-item">
-            <GraduationCap size={16} />
-            <span>{course.difficulty}</span>
+          <div className="flex items-center text-gray-600 space-x-2">
+            <GraduationCap size={16} className="text-blue-500" />
+            <span className="text-sm">{course.difficulty}</span>
           </div>
-          <div className="course-details-item">
-            <Clock size={16} />
-            <span>{course.estimatedHours} hours</span>
+          <div className="flex items-center text-gray-600 space-x-2">
+            <Clock size={16} className="text-blue-500" />
+            <span className="text-sm">{course.estimatedHours} hours</span>
           </div>
-          <div className="course-details-item">
-            <Users size={16} />
-            <span>{course.enrollmentCount} enrolled</span>
+          <div className="flex items-center text-gray-600 space-x-2">
+            <Users size={16} className="text-blue-500" />
+            <span className="text-sm">{course.enrollmentCount} enrolled</span>
           </div>
-          <div className="course-details-item">
-            <Star size={16} />
-            <span>{course.rating} Rating</span>
+          <div className="flex items-center text-gray-600 space-x-2">
+            <Star size={16} className="text-yellow-400" />
+            <span className="text-sm">{course.rating} Rating</span>
           </div>
         </div>
-        <div className="course-actions">
+        <div className="pt-4">
           <button 
-            className="course-link"
+            className="w-full flex items-center justify-center gap-2 bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg transition-colors"
             onClick={() => navigate(`/courses/${course.courseId}`)}
           >
             View Course
             <ChevronRight size={16} />
-          </button>
-          <button 
-            className="course-enroll"
-            onClick={() => onEnroll(course.courseId)}
-          >
-            Enroll
-            <PlusCircle size={16} />
           </button>
         </div>
       </div>
@@ -117,37 +102,6 @@ const AllCourses: React.FC = () => {
     fetchCourses();
   }, []);
 
-  const handleEnrollCourse = async (courseId: string) => {
-    try {
-      // TODO: Replace with actual enrollment API
-      const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL || 'http://localhost:3000'}/student/courses/${courseId}/enroll`, {}, {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('userToken')}`
-        }
-      });
-
-      if (response.data.success) {
-        // Optimistic UI update
-        const updatedCourses = courses.map(course => 
-          course.courseId === courseId 
-            ? { 
-                ...course, 
-                enrollmentCount: (course.enrollmentCount || 0) + 1,
-                userEnrolled: true 
-              } 
-            : course
-        );
-        setCourses(updatedCourses);
-
-        // Show success notification
-        alert(`Successfully enrolled in ${courses.find(c => c.courseId === courseId)?.title}`);
-      }
-    } catch (error) {
-      console.error('Enrollment failed:', error);
-      alert('Failed to enroll. Course might be full or you may already be enrolled.');
-    }
-  };
-
   // Filtering logic
   const filteredCourses = courses.filter(course => 
     (searchQuery === '' || 
@@ -178,61 +132,64 @@ const AllCourses: React.FC = () => {
   );
 
   return (
-    <div className="all-courses-container p-6 bg-gradient-to-br from-blue-50 to-white min-h-screen">
-      <div className="courses-header mb-6">
-        <h1 className="text-3xl font-bold text-blue-600 mb-4">Explore Free Courses</h1>
-        <div className="courses-filters grid grid-cols-1 md:grid-cols-4 gap-4">
-          <div className="search-bar col-span-2 flex items-center bg-white rounded-lg shadow-md">
-            <Search size={16} className="ml-3 text-gray-400" />
-            <input 
-              type="text" 
-              placeholder="Search courses by title or description..." 
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-300"
-            />
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-blue-50 p-4 sm:p-6 backdrop-blur-3xl">
+      <div className="max-w-7xl mx-auto">
+        <div className="mb-8">
+          <h1 className="text-2xl sm:text-3xl font-bold text-blue-600 mb-6">Explore Free Courses</h1>
+          <div className="space-y-4">
+            <div className="relative backdrop-blur-md bg-white/50 rounded-xl shadow-md border border-white/20 overflow-hidden">
+              <Search size={16} className="absolute left-4 top-1/2 transform -translate-y-1/2 text-blue-500" />
+              <input 
+                type="text" 
+                placeholder="Search courses by title or description..." 
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full pl-12 pr-4 py-3 bg-transparent focus:outline-none focus:ring-2 focus:ring-blue-300 text-gray-700 placeholder-gray-400"
+              />
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <select 
+                value={selectedCategory} 
+                onChange={(e) => setSelectedCategory(e.target.value)}
+                className="w-full p-3 rounded-xl backdrop-blur-md bg-white/50 border border-white/20 shadow-md focus:outline-none focus:ring-2 focus:ring-blue-300 text-gray-700"
+              >
+                {categories.map(category => (
+                  <option key={category} value={category}>
+                    {category === 'all' ? 'All Categories' : category}
+                  </option>
+                ))}
+              </select>
+              <select 
+                value={selectedLevel} 
+                onChange={(e) => setSelectedLevel(e.target.value)}
+                className="w-full p-3 rounded-xl backdrop-blur-md bg-white/50 border border-white/20 shadow-md focus:outline-none focus:ring-2 focus:ring-blue-300 text-gray-700"
+              >
+                {levels.map(level => (
+                  <option key={level} value={level}>
+                    {level === 'all' ? 'All Levels' : level}
+                  </option>
+                ))}
+              </select>
+            </div>
           </div>
-          <select 
-            value={selectedCategory} 
-            onChange={(e) => setSelectedCategory(e.target.value)}
-            className="p-3 bg-white rounded-lg shadow-md focus:outline-none focus:ring-2 focus:ring-blue-300"
-          >
-            {categories.map(category => (
-              <option key={category} value={category}>
-                {category === 'all' ? 'All Categories' : category}
-              </option>
-            ))}
-          </select>
-          <select 
-            value={selectedLevel} 
-            onChange={(e) => setSelectedLevel(e.target.value)}
-            className="p-3 bg-white rounded-lg shadow-md focus:outline-none focus:ring-2 focus:ring-blue-300"
-          >
-            {levels.map(level => (
-              <option key={level} value={level}>
-                {level === 'all' ? 'All Levels' : level}
-              </option>
-            ))}
-          </select>
         </div>
-      </div>
 
-      {filteredCourses.length === 0 ? (
-        <div className="text-center py-10">
-          <p className="text-xl text-gray-500">No courses found matching your filters.</p>
-          <p className="text-sm text-gray-400 mt-2">Try adjusting your search or filters.</p>
-        </div>
-      ) : (
-        <div className="courses-grid grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredCourses.map(course => (
-            <CourseCard 
-              key={course._id || course.title?.replace(/\s+/g, '-') || Math.random().toString(36).substring(2, 10)} 
-              course={course} 
-              onEnroll={handleEnrollCourse} 
-            />
-          ))}
-        </div>
-      )}
+        {filteredCourses.length === 0 ? (
+          <div className="text-center py-10 backdrop-blur-md bg-white/30 rounded-xl shadow-lg border border-white/20">
+            <p className="text-xl text-gray-600">No courses found matching your filters.</p>
+            <p className="text-sm text-gray-500 mt-2">Try adjusting your search or filters.</p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mt-8">
+            {filteredCourses.map(course => (
+              <CourseCard 
+                key={course._id || course.title?.replace(/\s+/g, '-') || Math.random().toString(36).substring(2, 10)} 
+                course={course}
+              />
+            ))}
+          </div>
+        )}
+      </div>
     </div>
   );
 };
