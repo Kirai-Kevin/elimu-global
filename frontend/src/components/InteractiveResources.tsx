@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import io from 'socket.io-client';
 import ChatWindow from './interactive-resources/ChatWindow';
 import ChatSidebar from './interactive-resources/ChatSidebar';
+import ComingSoonOverlay from './interactive-resources/ComingSoonOverlay';
 import interactiveService from '../services/interactiveService';
 import { StudentCommunication, Course, Communication } from '../types/interactive';
 import axios from 'axios';

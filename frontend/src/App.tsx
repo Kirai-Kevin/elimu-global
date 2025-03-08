@@ -21,7 +21,7 @@ import CourseLessons from './components/CourseLessons';
 import Quizzes from './components/Quizzes';
 import AssessmentPage from './components/AssessmentPage';
 import AssessmentDashboard from './components/AssessmentDashboard';
-import InteractiveResources from './components/InteractiveResources';
+import InteractiveResourcesComingSoon from './components/InteractiveResourcesComingSoon';
 import LearningMode from './components/LearningMode/LearningMode';
 import './components/FreeCourses/FreeCourses.css';
 
@@ -115,7 +115,7 @@ function AnimatedRoutes() {
           <Route path="quizzes" element={<Quizzes />} />
           <Route path="assessment" element={<AssessmentDashboard />} />
           <Route path="assessment/:courseId/:assessmentId" element={<AssessmentPage />} />
-          <Route path="interactive-resources" element={<InteractiveResources />} />
+          <Route path="interactive-resources" element={<InteractiveResourcesComingSoon />} />
         </Route>
 
         {/* Free Courses Routes */}
