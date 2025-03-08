@@ -126,30 +126,40 @@ const courseService = {
   getCurrentCourse: async () => {
     try {
       const userString = localStorage.getItem('user');
-      if (!userString) throw new Error('No authentication found');
+      if (!userString) {
+        return null;
+      }
       
       const { token } = JSON.parse(userString);
       
       // First try to get enrolled courses
-      const enrolledCourses = await courseService.getEnrolledCourses();
-      
-      if (enrolledCourses.length > 0) {
-        // Return the first enrolled course as the current course
-        return {
-          _id: enrolledCourses[0].courseId._id,
-          title: enrolledCourses[0].courseId.title,
-          description: enrolledCourses[0].courseId.description
-        };
+      try {
+        const enrolledCourses = await courseService.getEnrolledCourses();
+        
+        if (enrolledCourses && enrolledCourses.length > 0 && enrolledCourses[0].courseId) {
+          // Return the first enrolled course as the current course
+          return {
+            _id: enrolledCourses[0].courseId._id,
+            title: enrolledCourses[0].courseId.title,
+            description: enrolledCourses[0].courseId.description
+          };
+        }
+      } catch (enrolledError) {
+        console.error('Error fetching enrolled courses:', enrolledError);
       }
 
       // If no enrolled courses, try to get available courses
-      const response = await api.get<{ courses: Course[] }>(
-        '/student/courses',
-        { headers: { Authorization: `Bearer ${token}` }}
-      );
-      
-      if (response.data.courses && response.data.courses.length > 0) {
-        return response.data.courses[0];
+      try {
+        const response = await api.get<{ courses: Course[] }>(
+          '/student/courses',
+          { headers: { Authorization: `Bearer ${token}` }}
+        );
+        
+        if (response.data.courses && response.data.courses.length > 0) {
+          return response.data.courses[0];
+        }
+      } catch (availableError) {
+        console.error('Error fetching available courses:', availableError);
       }
 
       return null;

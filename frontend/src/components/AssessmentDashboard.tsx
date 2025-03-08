@@ -23,24 +23,26 @@ const AssessmentDashboard: React.FC = () => {
       try {
         // First, fetch the current course
         const course = await courseService.getCurrentCourse();
+        setCurrentCourse(course);
         
-        // If no course found, set error
-        if (!course || !course._id) {
+        // If no course found, set error and return early
+        if (!course) {
           setError('No active course found. Please select a course.');
           setItems([]);
-          setCurrentCourse(null);
           setLoading(false);
           return;
         }
 
-        // Set the current course
-        setCurrentCourse(course);
-
-        // Fetch items for the current course
-        const fetchedItems = await unifiedService.getItems(course._id, activeType);
-        
-        // Ensure fetchedItems is an array
-        setItems(Array.isArray(fetchedItems) ? fetchedItems : []);
+        try {
+          // Fetch items for the current course
+          const fetchedItems = await unifiedService.getItems(course._id, activeType);
+          // Ensure fetchedItems is an array
+          setItems(Array.isArray(fetchedItems) ? fetchedItems : []);
+        } catch (itemsError) {
+          console.error(`Error fetching ${activeType}:`, itemsError);
+          setError(`Failed to load ${activeType}. Please try again.`);
+          setItems([]);
+        }
       } catch (error) {
         console.error(`Failed to fetch ${activeType}:`, error);
         setError(`Failed to load ${activeType}. Please try again.`);

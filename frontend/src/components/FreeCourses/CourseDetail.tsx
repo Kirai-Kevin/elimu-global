@@ -155,15 +155,32 @@ const CourseDetail: React.FC = () => {
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
               onClick={handleStartCourse}
-              className="w-full bg-blue-500 text-white 
-                py-3 rounded-full 
-                flex items-center justify-center 
-                space-x-2 
-                hover:bg-blue-600 
-                transition-colors duration-300"
+              className="w-full bg-blue-500 text-white
+                py-3 rounded-full
+                flex items-center justify-center
+                space-x-2
+                hover:bg-blue-600
+                transition-colors duration-300
+                mb-3"
             >
               <Play size={20} />
               <span>Start Learning</span>
+            </motion.button>
+
+            {/* View Lessons Button */}
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={() => navigate(`/courses/${courseId}/lessons`)}
+              className="w-full bg-green-500 text-white
+                py-3 rounded-full
+                flex items-center justify-center
+                space-x-2
+                hover:bg-green-600
+                transition-colors duration-300"
+            >
+              <BookOpen size={20} />
+              <span>View Lessons</span>
             </motion.button>
           </div>
         </div>

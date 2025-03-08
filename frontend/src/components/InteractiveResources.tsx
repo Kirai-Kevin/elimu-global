@@ -37,14 +37,22 @@ const socket = io(import.meta.env.VITE_BACKEND_URL, {
 });
 
 // Transform enrolled course record to Course type
-const transformEnrolledRecordToCourse = (record: EnrolledCourseRecord): Course => ({
-  _id: record.courseId._id,
-  title: record.courseId.title,
-  description: record.courseId.description,
-  enrolled: true,
-  instructor: record.courseId.instructor || { name: 'Course Instructor' },
-  category: record.courseId.subject
-});
+const transformEnrolledRecordToCourse = (record: EnrolledCourseRecord): Course | null => {
+  // Skip records with null courseId
+  if (!record.courseId) {
+    console.warn('Skipping enrolled course record with null courseId:', record);
+    return null;
+  }
+
+  return {
+    _id: record.courseId._id,
+    title: record.courseId.title,
+    description: record.courseId.description,
+    enrolled: true,
+    instructor: record.courseId.instructor || { name: 'Course Instructor' },
+    category: record.courseId.subject
+  };
+};
 
 const transformStudentCommunicationToCommunication = (
   msg: StudentCommunication,
@@ -89,7 +97,9 @@ const InteractiveResources = () => {
               headers: { Authorization: `Bearer ${token}` }
             }
           );
-          const coursesWithEnrolled = enrolledResponse.data.map(transformEnrolledRecordToCourse);
+          const coursesWithEnrolled = enrolledResponse.data
+            .map(transformEnrolledRecordToCourse)
+            .filter((course): course is Course => course !== null);
           setCourses(coursesWithEnrolled);
         } catch (error) {
           console.error('Error loading courses:', error);

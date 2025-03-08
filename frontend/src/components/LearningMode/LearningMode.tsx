@@ -11,11 +11,11 @@ import {
   Clock,
   X,
   Loader2,
-  Lightbulb
+  Lightbulb,
+  Award
 } from 'lucide-react';
 import { useParams, useNavigate } from 'react-router-dom';
-import FreeCourseService from '../../services/freeCourseService';
-import { FreeCourse } from '../../services/freeCourseService';
+import FreeCourseService, { FreeCourse } from '../../services/freeCourseService';
 import { getChatResponse } from '../../services/groqService';
 import { addMessageToChat } from '../ChatBot';
 

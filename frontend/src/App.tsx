@@ -17,6 +17,7 @@ import PageTransition from './components/PageTransition';
 import AllCourses from './components/FreeCourses/FreeCoursesList';
 import FeaturedCourses from './components/FreeCourses/FeaturedCourses';
 import CourseDetail from './components/FreeCourses/CourseDetail';
+import CourseLessons from './components/CourseLessons';
 import Quizzes from './components/Quizzes';
 import AssessmentPage from './components/AssessmentPage';
 import AssessmentDashboard from './components/AssessmentDashboard';
@@ -26,7 +27,26 @@ import './components/FreeCourses/FreeCourses.css';
 
 // Auth checks
 const isAuthenticated = () => {
-  return localStorage.getItem('userToken') !== null;
+  const userToken = localStorage.getItem('userToken');
+  const userString = localStorage.getItem('user');
+
+  console.log('Checking authentication:', { userToken, userString });
+
+  // Check both userToken and user object
+  if (userToken) return true;
+
+  // If no userToken, check if user object has a token
+  if (userString) {
+    try {
+      const userData = JSON.parse(userString);
+      return !!userData.token;
+    } catch (error) {
+      console.error('Error parsing user data during auth check:', error);
+      return false;
+    }
+  }
+
+  return false;
 };
 
 // Protected Route wrapper component
@@ -123,8 +143,8 @@ function AnimatedRoutes() {
         >
           <Route index element={<FeaturedCourses />} />
         </Route>
-        <Route 
-          path="/courses/:courseId" 
+        <Route
+          path="/courses/:courseId"
           element={
             <ProtectedRoute>
               <PageTransition>
@@ -135,8 +155,20 @@ function AnimatedRoutes() {
         >
           <Route index element={<CourseDetail />} />
         </Route>
-        <Route 
-          path="/learning/:courseId" 
+        <Route
+          path="/courses/:courseId/lessons"
+          element={
+            <ProtectedRoute>
+              <PageTransition>
+                <Layout />
+              </PageTransition>
+            </ProtectedRoute>
+          }
+        >
+          <Route index element={<CourseLessons />} />
+        </Route>
+        <Route
+          path="/learning/:courseId"
           element={
             <ProtectedRoute>
               <PageTransition>

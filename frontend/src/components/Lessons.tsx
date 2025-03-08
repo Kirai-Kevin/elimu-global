@@ -284,19 +284,29 @@ function Lessons() {
       enrolledCourse => enrolledCourse._id === course._id
     );
 
-    // If already enrolled, show Start Learning button
+    // If already enrolled, show Start Learning and View Lessons buttons
     if (isAlreadyEnrolled) {
       return (
-        <button 
-          onClick={() => {
-            // Enter learning mode for this course
-            setLearningModeCourseId(course._id);
-          }}
-          className="w-full flex items-center justify-center px-4 py-2 rounded-lg transition bg-green-500 text-white hover:bg-green-600"
-        >
-          <Play className="mr-2 w-5 h-5" />
-          Start Learning
-        </button>
+        <div className="space-y-2">
+          <button
+            onClick={() => {
+              // Enter learning mode for this course
+              setLearningModeCourseId(course._id);
+            }}
+            className="w-full flex items-center justify-center px-4 py-2 rounded-lg transition bg-green-500 text-white hover:bg-green-600"
+          >
+            <Play className="mr-2 w-5 h-5" />
+            Start Learning
+          </button>
+
+          <a
+            href={`/courses/${course._id}/lessons`}
+            className="w-full flex items-center justify-center px-4 py-2 rounded-lg transition bg-blue-500 text-white hover:bg-blue-600"
+          >
+            <BookOpen className="mr-2 w-5 h-5" />
+            View Lessons
+          </a>
+        </div>
       );
     }
 

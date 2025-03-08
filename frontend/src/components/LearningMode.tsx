@@ -35,7 +35,7 @@ const LearningMode: React.FC<LearningModeProps> = ({ courseId, onClose }) => {
       try {
         setIsLoading(true);
         const token = getAuthToken();
-        const response = await axios.get(`/courses/${courseId}/lessons`, {
+        const response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/student/courses/${courseId}/lessons`, {
           headers: { Authorization: `Bearer ${token}` }
         });
         

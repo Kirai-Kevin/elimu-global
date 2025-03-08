@@ -46,6 +46,10 @@ function SelectInstructor() {
     totalPages: 0
   });
 
+  // Debug States
+  const [showDebugPanel, setShowDebugPanel] = useState<boolean>(false);
+  const [lastApiResponse, setLastApiResponse] = useState<any>(null);
+
   // Responsive Design Handler
   const handleResize = useCallback(() => {
     const mobile = window.innerWidth <= 768;
@@ -67,18 +71,42 @@ function SelectInstructor() {
   // Fetch Instructor Courses
   const fetchInstructorCourses = async (instructorId: string) => {
     try {
+      console.log('🔍 Fetching courses for instructor ID:', instructorId);
+      console.log('🔍 Current pagination state:', coursePagination);
+
       setCourseLoading(true);
       const response = await authenticatedGet(`/instructors/${instructorId}/courses`, {
         page: coursePagination.page,
         limit: 10
       });
 
-      setInstructorCourses(response.data.courses);
+      // Log the full API response
+      console.log('✅ API Response for instructor courses:', response);
+      console.log('📚 Courses data:', response.data.courses);
+
+      // Store the response for debugging
+      setLastApiResponse(response.data);
+
+      // Check if courses array exists and has items
+      if (!response.data.courses) {
+        console.warn('⚠️ No courses array in API response');
+      } else if (response.data.courses.length === 0) {
+        console.warn('⚠️ Courses array is empty');
+      }
+
+      setInstructorCourses(response.data.courses || []);
       setCoursePagination({
-        total: response.data.total,
-        page: response.data.page,
-        totalPages: response.data.totalPages
+        total: response.data.total || 0,
+        page: response.data.page || 1,
+        totalPages: response.data.totalPages || 0
       });
+
+      console.log('📊 Updated course pagination:', {
+        total: response.data.total || 0,
+        page: response.data.page || 1,
+        totalPages: response.data.totalPages || 0
+      });
+
       setCourseLoading(false);
 
       // For mobile, switch to courses view
@@ -87,19 +115,27 @@ function SelectInstructor() {
         setIsSidebarOpen(true);
       }
     } catch (err) {
-      console.error('Courses fetch error:', err);
+      console.error('❌ Courses fetch error:', err);
+      // Log more details about the error
+      if (err.response) {
+        console.error('❌ Error response data:', err.response.data);
+        console.error('❌ Error response status:', err.response.status);
+      }
       setCourseLoading(false);
       setInstructorCourses([]);
     }
   };
 
   const handleInstructorSelect = (instructor: Instructor) => {
+    console.log('👨‍🏫 Selected instructor:', instructor);
     setSelectedInstructor(instructor);
-    
+
     // Use courses from the instructor if available, otherwise fetch
     if (instructor.courses && instructor.courses.length > 0) {
+    console.log('📚 Using cached instructor courses:', instructor.courses);
       setInstructorCourses(instructor.courses);
     } else {
+      console.log('🔄 No cached courses, fetching from API for instructor:', instructor._id);
       fetchInstructorCourses(instructor._id);
     }
   };
@@ -107,6 +143,14 @@ function SelectInstructor() {
   // Main Instructors Fetch
   useEffect(() => {
     const fetchInstructors = async () => {
+      console.log('🔍 Fetching instructors with params:', {
+        page,
+        limit: 9,
+        search: searchQuery,
+        sortBy: 'lastName',
+        includeCourses: true
+      });
+
       try {
         const response = await authenticatedGet('/instructors', {
           page,
@@ -116,22 +160,40 @@ function SelectInstructor() {
           includeCourses: true
         });
 
-        const validInstructors = response.data.instructors.map((instructor: any) => ({
-          _id: instructor._id,
-          firstName: instructor.firstName || 'Unknown',
-          lastName: instructor.lastName || 'Instructor',
-          email: instructor.email,
-          specialization: instructor.specialization || 'No Specialization',
-          profilePicture: instructor.profilePicture,
-          socialLinks: instructor.socialLinks,
-          courses: instructor.courses || []
-        }));
+        console.log('✅ Instructors API response:', response);
 
+        // Check if instructors array exists
+        if (!response.data.instructors) {
+          console.warn('⚠️ No instructors array in API response');
+        }
+
+        const validInstructors = response.data.instructors.map((instructor: any) => {
+          // Log each instructor's courses
+          console.log(`📚 Instructor ${instructor.firstName} ${instructor.lastName} courses:`, instructor.courses);
+
+          return {
+              _id: instructor._id,
+            firstName: instructor.firstName || 'Unknown',
+            lastName: instructor.lastName || 'Instructor',
+            email: instructor.email,
+            specialization: instructor.specialization || 'No Specialization',
+            profilePicture: instructor.profilePicture,
+            socialLinks: instructor.socialLinks,
+            courses: instructor.courses || []
+          };
+        });
+
+        console.log('👨‍🏫 Processed instructors:', validInstructors);
         setInstructors(validInstructors);
         setTotalPages(response.data.totalPages);
         setLoading(false);
       } catch (err) {
-        console.error('Instructors fetch error:', err);
+        console.error('❌ Instructors fetch error:', err);
+        // Log more details about the error
+        if (err.response) {
+          console.error('❌ Error response data:', err.response.data);
+          console.error('❌ Error response status:', err.response.status);
+        }
         setError(err instanceof Error ? err.message : 'Failed to load instructors');
         setLoading(false);
       }
@@ -266,46 +328,103 @@ function SelectInstructor() {
                     <h2 className="text-xl md:text-2xl font-bold">
                       {selectedInstructor.firstName}'s Courses
                     </h2>
-                    {!isMobile && (
-                      <button 
-                        onClick={() => setSelectedInstructor(null)}
-                        className="text-gray-500 hover:text-gray-700"
+                    <div className="flex items-center">
+                      {/* Debug button */}
+                      <button
+                        onClick={() => fetchInstructorCourses(selectedInstructor._id)}
+                        className="mr-2 px-2 py-1 text-xs bg-yellow-100 text-yellow-800 rounded hover:bg-yellow-200"
+                        title="Manually fetch courses again"
                       >
-                        <X className="w-6 h-6" />
+                        Refresh Data
                       </button>
-                    )}
+                      {!isMobile && (
+                        <button
+                          onClick={() => setSelectedInstructor(null)}
+                          className="text-gray-500 hover:text-gray-700"
+                        >
+                          <X className="w-6 h-6" />
+                        </button>
+                      )}
+                    </div>
                   </div>
 
                   {courseLoading ? (
                     <div className="flex justify-center items-center h-48">
                       <BookOpen className="w-12 h-12 text-blue-500 animate-pulse" />
+                      <div className="ml-3 text-blue-500">Loading courses...</div>
                     </div>
                   ) : instructorCourses.length === 0 ? (
                     <div className="text-center text-gray-500 py-8">
-                      No courses available for this instructor.
+                      <div className="mb-2">No courses available for this instructor.</div>
+                      <div className="text-xs bg-yellow-50 p-3 rounded-lg inline-block mb-3">
+                        Check browser console for API logs
+                      </div>
+
+                      <button
+                        onClick={() => setShowDebugPanel(!showDebugPanel)}
+                        className="px-3 py-1 bg-blue-100 text-blue-800 rounded hover:bg-blue-200 text-xs"
+                      >
+                        {showDebugPanel ? 'Hide Debug Info' : 'Show Debug Info'}
+                      </button>
+
+                      {/* Debug Panel for empty courses */}
+                      {showDebugPanel && (
+                        <div className="mt-4 p-3 bg-gray-100 rounded-lg border border-gray-300 overflow-auto max-h-60 text-left">
+                          <h4 className="font-bold text-sm mb-2">API Response Debug:</h4>
+                          {lastApiResponse ? (
+                            <pre className="text-xs whitespace-pre-wrap overflow-x-auto">
+                              {JSON.stringify(lastApiResponse, null, 2)}
+                            </pre>
+                          ) : (
+                            <div className="text-xs text-red-500">No API response data available yet.</div>
+                          )}
+                        </div>
+                      )}
                     </div>
                   ) : (
                     <div className="space-y-4">
-                      {instructorCourses.map((course) => (
-                        <motion.div
-                          key={course._id}
-                          initial={{ opacity: 0, y: 20 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          className="bg-gray-100 p-4 rounded-lg"
+                      <div className="bg-blue-50 p-2 rounded-lg text-xs text-blue-700 mb-2 flex justify-between items-center">
+                        <span>Found {instructorCourses.length} courses for this instructor</span>
+                        <button
+                          onClick={() => setShowDebugPanel(!showDebugPanel)}
+                          className="px-2 py-1 bg-blue-200 text-blue-800 rounded hover:bg-blue-300"
                         >
-                          <div className="flex justify-between items-center">
-                            <div>
-                              <h3 className="font-semibold text-base md:text-lg">
-                                {course.title}
-                              </h3>
-                              <p className="text-xs md:text-sm text-gray-600">
-                                {course.category} | {course.difficulty} Level
-                              </p>
+                          {showDebugPanel ? 'Hide Debug' : 'Show Debug'}
+                        </button>
+                      </div>
+
+                      {/* Debug Panel */}
+                      {showDebugPanel && lastApiResponse && (
+                        <div className="mb-4 p-3 bg-gray-100 rounded-lg border border-gray-300 overflow-auto max-h-60">
+                          <h4 className="font-bold text-sm mb-2">API Response Debug:</h4>
+                          <pre className="text-xs whitespace-pre-wrap overflow-x-auto">
+                            {JSON.stringify(lastApiResponse, null, 2)}
+                          </pre>
+                        </div>
+                      )}
+                      {instructorCourses.map((course) => {
+                        console.log('🎯 Rendering course:', course);
+                        return (
+                          <motion.div
+                            key={course._id}
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            className="bg-gray-100 p-4 rounded-lg"
+                          >
+                            <div className="flex justify-between items-center">
+                              <div>
+                                <h3 className="font-semibold text-base md:text-lg">
+                                  {course.title}
+                                </h3>
+                                <p className="text-xs md:text-sm text-gray-600">
+                                  {course.category} | {course.difficulty} Level
+                                </p>
+                              </div>
+                              <BookmarkPlus className="text-blue-500 w-5 h-5 md:w-6 md:h-6" />
                             </div>
-                            <BookmarkPlus className="text-blue-500 w-5 h-5 md:w-6 md:h-6" />
-                          </div>
-                        </motion.div>
-                      ))}
+                          </motion.div>
+                        );
+                      })}
                     </div>
                   )}
 
