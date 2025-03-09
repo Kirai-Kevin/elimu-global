@@ -7,11 +7,11 @@
     "node": ">=18.x"
   },
   "scripts": {
-    "dev": "vite",
-    "build": "tsc && vite build",
+    "dev": "node init && vite",
+    "build": "node init && tsc && vite build",
     "lint": "eslint src/**/*.{ts,tsx}",
     "preview": "vite preview",
-    "start": "npx serve dist -s -n -L -p $PORT",
+    "start": "node init && npx serve dist -s -n -L -p $PORT",
     "format": "echo 'Formatting disabled'"
   },
   "dependencies": {
